@@ -1,0 +1,182 @@
+import { useState } from 'react';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext.jsx';
+import AnnouncementBar from './AnnouncementBar.jsx';
+import WillowLogo from './WillowLogo.jsx';
+import {
+  SearchIcon,
+  UserIcon,
+  HeartIcon,
+  ShoppingBagIcon,
+  MenuIcon,
+  CloseIcon,
+} from './NavIcons.jsx';
+
+const NAV_CATEGORIES = [
+  { name: 'NEW IN', path: '/' },
+  { name: 'SHOP', path: '/' },
+  { name: 'DRESSES', path: '/' },
+  { name: 'CLOTHING', path: '/' },
+  { name: 'BAGS', path: '/' },
+  { name: 'SHOES', path: '/' },
+  { name: 'ACCESSORIES', path: '/' },
+  { name: 'SALE', path: '/', isSale: true },
+];
+
+export default function Header() {
+  const { count, setIsOpen } = useCart();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [wishlistCount] = useState(2); // Decorative wishlist count
+  const navigate = useNavigate();
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+      setSearchOpen(false);
+    }
+  };
+
+  return (
+    <header className="willow-header-container">
+      {/* Top Announcement Bar */}
+      <AnnouncementBar />
+
+      {/* Main Navbar */}
+      <nav className="willow-navbar">
+        {/* Mobile Hamburger Button */}
+        <button
+          type="button"
+          className="mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle Navigation Menu"
+        >
+          {mobileMenuOpen ? <CloseIcon size={24} /> : <MenuIcon size={24} />}
+        </button>
+
+        {/* Left: Category Navigation Links (Desktop) */}
+        <div className="nav-links-left">
+          {NAV_CATEGORIES.map((cat) => (
+            <NavLink
+              key={cat.name}
+              to={cat.path}
+              className={({ isActive }) =>
+                `nav-item ${cat.isSale ? 'sale' : ''} ${isActive && cat.path !== '/' ? 'active' : ''}`
+              }
+            >
+              {cat.name}
+            </NavLink>
+          ))}
+        </div>
+
+        {/* Center: Willow Brand Logo */}
+        <div className="nav-logo-center">
+          <Link to="/" aria-label="Willow Homepage" className="logo-link">
+            <WillowLogo height={78} color="#2C181E" />
+          </Link>
+        </div>
+
+        {/* Right: Utility Icons */}
+        <div className="nav-icons-right">
+          {/* Search Action */}
+          <button
+            type="button"
+            className="icon-action-btn"
+            onClick={() => setSearchOpen(!searchOpen)}
+            title="Search"
+            aria-label="Search items"
+          >
+            <SearchIcon size={20} color="#2C181E" />
+          </button>
+
+          {/* User Account Action */}
+          <button
+            type="button"
+            className="icon-action-btn desktop-only"
+            title="Account"
+            aria-label="User Account"
+          >
+            <UserIcon size={20} color="#2C181E" />
+          </button>
+
+          {/* Wishlist Action */}
+          <button
+            type="button"
+            className="icon-action-btn desktop-only badge-btn"
+            title="Wishlist"
+            aria-label="View Wishlist"
+          >
+            <HeartIcon size={20} color="#2C181E" />
+            {wishlistCount > 0 && <span className="icon-badge wishlist-badge">{wishlistCount}</span>}
+          </button>
+
+          {/* Shopping Bag / Cart Action */}
+          <button
+            type="button"
+            className="icon-action-btn bag-action-btn badge-btn"
+            onClick={() => setIsOpen(true)}
+            title="Shopping Bag"
+            aria-label="Open Shopping Bag"
+          >
+            <ShoppingBagIcon size={22} color="#2C181E" />
+            <span className="icon-badge cart-badge">{count}</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Expandable Search Overlay */}
+      {searchOpen && (
+        <div className="search-bar-overlay">
+          <form onSubmit={handleSearchSubmit} className="search-form">
+            <SearchIcon size={18} color="#2C181E" className="search-form-icon" />
+            <input
+              type="text"
+              placeholder="Search dresses, bags, accessories, shoes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+              className="search-input"
+            />
+            <button
+              type="button"
+              className="search-close-btn"
+              onClick={() => setSearchOpen(false)}
+            >
+              <CloseIcon size={18} />
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="mobile-menu-drawer">
+          <div className="mobile-drawer-content">
+            <div className="mobile-categories">
+              {NAV_CATEGORIES.map((cat) => (
+                <NavLink
+                  key={cat.name}
+                  to={cat.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={({ isActive }) =>
+                    `mobile-nav-item ${cat.isSale ? 'sale' : ''} ${isActive ? 'active' : ''}`
+                  }
+                >
+                  {cat.name}
+                </NavLink>
+              ))}
+            </div>
+
+            <div className="mobile-footer-actions">
+              <Link to="/" className="mobile-action-link" onClick={() => setMobileMenuOpen(false)}>
+                <UserIcon size={18} /> My Account
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}

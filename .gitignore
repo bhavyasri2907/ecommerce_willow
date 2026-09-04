@@ -1,0 +1,15 @@
+# Frontend
+willow_fe/node_modules/
+willow_fe/dist/
+
+# Backend
+willow_be/target/
+
+# IntelliJ
+.idea/
+**/.idea/
+*.iml
+
+# Environment files
+.env
+.env.*
