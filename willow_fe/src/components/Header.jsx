@@ -13,22 +13,21 @@ import {
 } from './NavIcons.jsx';
 
 const NAV_CATEGORIES = [
-  { name: 'NEW IN', path: '/' },
-  { name: 'SHOP', path: '/' },
-  { name: 'DRESSES', path: '/' },
-  { name: 'CLOTHING', path: '/' },
-  { name: 'BAGS', path: '/' },
-  { name: 'SHOES', path: '/' },
-  { name: 'ACCESSORIES', path: '/' },
-  { name: 'SALE', path: '/', isSale: true },
+  { name: 'NEW IN', path: '/new-in' },
+  { name: 'MEN', path: '/men' },
+  { name: 'ALL', path: '/all' },
+  { name: 'WOMEN', path: '/women' },
+  { name: 'BAGS', path: '/bags' },
+  { name: 'SHOES', path: '/shoes' },
+  { name: 'ACCESSORIES', path: '/accessories' },
+  { name: 'SALE', path: '/sale', isSale: true },
 ];
 
 export default function Header() {
-  const { count, setIsOpen } = useCart();
+  const { count, wishlistCount, setIsOpen } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [wishlistCount] = useState(2); // Decorative wishlist count
   const navigate = useNavigate();
 
   const handleSearchSubmit = (e) => {
@@ -95,7 +94,8 @@ export default function Header() {
           <button
             type="button"
             className="icon-action-btn desktop-only"
-            title="Account"
+            onClick={() => navigate('/account')}
+            title="Account & Seller Portal"
             aria-label="User Account"
           >
             <UserIcon size={20} color="#2C181E" />
@@ -105,6 +105,7 @@ export default function Header() {
           <button
             type="button"
             className="icon-action-btn desktop-only badge-btn"
+            onClick={() => navigate('/wishlist')}
             title="Wishlist"
             aria-label="View Wishlist"
           >

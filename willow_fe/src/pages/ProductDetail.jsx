@@ -7,12 +7,15 @@ import Garment from '../icons/Garment.jsx';
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart, toggleWishlist, isInWishlist, getPairingsForTop } = useCart();
 
   const [product, setProduct] = useState(null);
   const [matches, setMatches] = useState(null);
   const [matchesVisible, setMatchesVisible] = useState(false);
   const [matchStatus, setMatchStatus] = useState('idle'); // idle | loading | ready | error
+
+  const sellerPairings = getPairingsForTop(id);
+  const isSaved = product ? isInWishlist(product.id) : false;
 
   useEffect(() => {
     setProduct(null);
@@ -42,8 +45,8 @@ export default function ProductDetail() {
   if (product === false) return <p className="state-msg">Couldn't load that product.</p>;
 
   return (
-    <div>
-      <button className="back-link" onClick={() => navigate(-1)}>← Back to the edit</button>
+    <div className="product-detail-page">
+      <button className="back-link" onClick={() => navigate(-1)}>← Back to collection</button>
 
       <div className="pd">
         <div className="pd-swatch" style={{ background: `${product.hex}22` }}>
@@ -55,7 +58,17 @@ export default function ProductDetail() {
           <h1>{product.name}</h1>
           <div className="price">₹{Number(product.price).toLocaleString('en-IN')}</div>
           <p className="desc">{product.description}</p>
-          <button className="add-btn" onClick={() => addToCart(product)}>Add to bag</button>
+
+          <div className="pd-action-row">
+            <button className="add-btn" onClick={() => addToCart(product)}>Add to bag</button>
+            <button
+              className={`pd-wishlist-btn ${isSaved ? 'saved' : ''}`}
+              onClick={() => toggleWishlist(product)}
+              title={isSaved ? 'Remove from Wishlist' : 'Save to Wishlist'}
+            >
+              {isSaved ? '♥ Saved to Wishlist' : '♡ Save to Wishlist'}
+            </button>
+          </div>
 
           {product.type === 'TOP' && (
             <div className="ai-box">

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 import Garment from '../icons/Garment.jsx';
 import ShopByCategory from '../components/ShopByCategory.jsx';
+import heroBg from '../assets/heropage2.png';
 
 export default function Shop() {
   const [products, setProducts] = useState([]);
@@ -34,24 +35,65 @@ export default function Shop() {
 
   return (
     <div>
-      <div className="hero">
-        <div>
-          <h1>Dress in<br />pairs, not<br />pieces.</h1>
-          <p className="sub">
-            Willow pairs every top with pants its own sellers have chosen — then lets a style
-            assistant tell you why they work.
-          </p>
-          <button
-            className="hero-cta"
-            onClick={() => document.getElementById('catalog').scrollIntoView({ behavior: 'smooth' })}
-          >
-            Explore Collection
-          </button>
-        </div>
-        <div className="hero-side">
-          Every recommendation on Willow starts with the seller, not a guess. Our style assistant
-          only ever ranks and explains matches a seller has already approved — so what you see is
-          always something you can actually buy.
+      {/* 100% Full-width Picture Hero with Direct Overlay Content */}
+      <div className="hero-full-screen">
+        <img src={heroBg} alt="Willow Style Assistant" className="hero-bg-img" />
+
+        <div className="hero-overlay-container">
+          <div className="hero-overlay-content">
+            <h1>
+              Dress in<br />
+              <span className="hero-accent-word">pairs</span>, not<br />
+              pieces.
+            </h1>
+
+            <p className="hero-sub-description">
+              Discover complete outfits from tops and bottoms to shoes and accessories.<br />
+              Every look is thoughtfully styled so everything works perfectly together.
+            </p>
+
+            {/* Rating & Social Proof Bar */}
+            <div className="hero-rating-section">
+              <div className="hero-rating-row">
+                <div className="stars-row" aria-label="5 out of 5 stars">
+                  ★★★★★
+                </div>
+                <span className="rating-score">4.9/5</span>
+              </div>
+              <div className="hero-rating-divider" />
+            </div>
+
+            {/* Dual Action CTA Buttons */}
+            <div className="hero-cta-group">
+              <button
+                className="hero-primary-cta"
+                onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <span>Explore Collections</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+
+              <div className="hero-secondary-cta-wrapper">
+                <button
+                  className="hero-secondary-cta"
+                  onClick={() => navigate('/studio')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="4" x2="20" y1="21" y2="21" />
+                    <line x1="4" x2="20" y1="14" y2="14" />
+                    <line x1="4" x2="20" y1="7" y2="7" />
+                    <circle cx="8" cy="21" r="2" />
+                    <circle cx="16" cy="14" r="2" />
+                    <circle cx="12" cy="7" r="2" />
+                  </svg>
+                  <span>Find Your Style Fit</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -7,6 +7,29 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState({});
   const [isOpen, setIsOpen] = useState(false);
 
+  // Wishlist State: { [productId]: product }
+  const [wishlist, setWishlist] = useState({
+    101: { id: 101, name: 'Blue Crop Top', type: 'TOP', color: 'Blue', hex: '#5C7AA6', style: 'Casual', price: 999, description: 'A relaxed cotton crop top with a soft drape.' },
+    203: { id: 203, name: 'Light Blue Jeans', type: 'PANTS', color: 'Light Blue', hex: '#9DB3C8', style: 'Casual', price: 1799, description: 'Softly faded straight jeans.' }
+  });
+
+  // Seller Uploaded Products & Outfit Pairings State
+  const [sellerProducts, setSellerProducts] = useState([]);
+  const [sellerPairings, setSellerPairings] = useState([
+    {
+      topId: '101',
+      matchProduct: { id: 201, name: 'Black Wide-Leg Pants', type: 'PANTS', color: 'Black', hex: '#2B2730', style: 'Casual', price: 1499, description: 'High-rise wide-leg trousers.' },
+      reason: 'Seller Curated: High-contrast casual pairing with relaxed crop top silhouette.',
+      matchScore: 98
+    },
+    {
+      topId: '101',
+      matchProduct: { id: 911, name: 'Classic Canvas Lows', type: 'SHOES', color: 'Burgundy', hex: '#7D2D40', style: 'Casual', price: 2499, description: 'Heritage canvas low-top sneakers.' },
+      reason: 'Stylist Picked Shoes: Adds a bold vintage pop of color to blue crop top.',
+      matchScore: 96
+    }
+  ]);
+
   function addToCart(product) {
     setItems((prev) => {
       const existing = prev[product.id];
@@ -45,6 +68,36 @@ export function CartProvider({ children }) {
     setItems({});
   }
 
+  // Wishlist Handlers
+  function toggleWishlist(product) {
+    setWishlist((prev) => {
+      const next = { ...prev };
+      if (next[product.id]) {
+        delete next[product.id];
+      } else {
+        next[product.id] = product;
+      }
+      return next;
+    });
+  }
+
+  function isInWishlist(productId) {
+    return !!wishlist[productId];
+  }
+
+  // Seller Handlers
+  function addSellerProduct(newProduct) {
+    setSellerProducts((prev) => [newProduct, ...prev]);
+  }
+
+  function addOutfitPairing(pairing) {
+    setSellerPairings((prev) => [pairing, ...prev]);
+  }
+
+  function getPairingsForTop(topId) {
+    return sellerPairings.filter((p) => String(p.topId) === String(topId));
+  }
+
   const count = useMemo(
     () => Object.values(items).reduce((sum, i) => sum + i.qty, 0),
     [items]
@@ -52,6 +105,11 @@ export function CartProvider({ children }) {
   const total = useMemo(
     () => Object.values(items).reduce((sum, i) => sum + i.qty * Number(i.product.price), 0),
     [items]
+  );
+
+  const wishlistCount = useMemo(
+    () => Object.keys(wishlist).length,
+    [wishlist]
   );
 
   const value = {
@@ -64,6 +122,17 @@ export function CartProvider({ children }) {
     changeQty,
     removeItem,
     clearCart,
+    // Wishlist
+    wishlist,
+    wishlistCount,
+    toggleWishlist,
+    isInWishlist,
+    // Seller Studio & Outfit Curations
+    sellerProducts,
+    sellerPairings,
+    addSellerProduct,
+    addOutfitPairing,
+    getPairingsForTop,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
