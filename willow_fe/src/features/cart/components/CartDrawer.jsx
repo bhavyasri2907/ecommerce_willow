@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext.jsx';
-import Garment from '../icons/Garment.jsx';
+import { useCart } from '../../../context/CartContext.jsx';
+import Garment from '../../../assets/icons/Garment.jsx';
 
 export default function CartDrawer() {
   const { items, total, isOpen, setIsOpen, changeQty, removeItem, clearCart } = useCart();

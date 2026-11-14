@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/client.js';
-import Garment from '../icons/Garment.jsx';
-import ShopByCategory from '../components/ShopByCategory.jsx';
-import heroBg from '../assets/heropage2.png';
+import { productService } from '../services/productService.js';
+import Garment from '../assets/icons/Garment.jsx';
+import ShopByCategory from '../features/products/components/ShopByCategory.jsx';
+import heroBg from '../assets/images/heropage2.png';
 
-export default function Shop() {
+export default function Home() {
   const [products, setProducts] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
   const [filterType, setFilterType] = useState(null);
@@ -14,7 +14,7 @@ export default function Shop() {
 
   useEffect(() => {
     setStatus('loading');
-    api
+    productService
       .listProducts(filterType)
       .then((data) => {
         setProducts(data);

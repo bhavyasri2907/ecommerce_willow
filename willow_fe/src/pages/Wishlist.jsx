@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
-import Garment from '../icons/Garment.jsx';
+import Garment from '../assets/icons/Garment.jsx';
 
 export default function Wishlist() {
   const { wishlist, toggleWishlist, addToCart } = useCart();

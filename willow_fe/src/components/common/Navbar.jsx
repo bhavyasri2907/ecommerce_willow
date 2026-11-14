@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext.jsx';
+import { useCart } from '../../context/CartContext.jsx';
 import AnnouncementBar from './AnnouncementBar.jsx';
 import WillowLogo from './WillowLogo.jsx';
 import {
@@ -10,7 +10,7 @@ import {
   ShoppingBagIcon,
   MenuIcon,
   CloseIcon,
-} from './NavIcons.jsx';
+} from '../../assets/icons/NavIcons.jsx';
 
 const NAV_CATEGORIES = [
   { name: 'NEW IN', path: '/new-in' },
@@ -23,7 +23,7 @@ const NAV_CATEGORIES = [
   { name: 'SALE', path: '/sale', isSale: true },
 ];
 
-export default function Header() {
+export default function Navbar() {
   const { count, wishlistCount, setIsOpen } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);

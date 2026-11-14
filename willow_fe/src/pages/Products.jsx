@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { api } from '../api/client.js';
-import Garment from '../icons/Garment.jsx';
+import { productService } from '../services/productService.js';
+import Garment from '../assets/icons/Garment.jsx';
 
 // Custom curated items for specific categories (Bags, Shoes, Accessories, Sale, New In)
 const EXTENDED_COLLECTIONS = {
@@ -22,7 +22,7 @@ const EXTENDED_COLLECTIONS = {
   ],
 };
 
-export default function CategoryPage({ categoryKey, title, subtitle, badge, isSalePage = false }) {
+export default function Products({ categoryKey, title, subtitle, badge, isSalePage = false }) {
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState('loading');
   const [activeFilter, setActiveFilter] = useState('ALL');
@@ -33,7 +33,7 @@ export default function CategoryPage({ categoryKey, title, subtitle, badge, isSa
     setStatus('loading');
     window.scrollTo(0, 0);
 
-    api
+    productService
       .listProducts()
       .then((data) => {
         let items = [...data];

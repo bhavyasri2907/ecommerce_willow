@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { api } from '../api/client.js';
+import { productService } from '../services/productService.js';
 import { useCart } from '../context/CartContext.jsx';
-import Garment from '../icons/Garment.jsx';
+import Garment from '../assets/icons/Garment.jsx';
 
-export default function ProductDetail() {
+export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, toggleWishlist, isInWishlist, getPairingsForTop } = useCart();
@@ -22,7 +22,7 @@ export default function ProductDetail() {
     setMatches(null);
     setMatchesVisible(false);
     setMatchStatus('idle');
-    api.getProduct(id).then(setProduct).catch(() => setProduct(false));
+    productService.getProduct(id).then(setProduct).catch(() => setProduct(false));
   }, [id]);
 
   async function handleFindMatches() {
@@ -32,7 +32,7 @@ export default function ProductDetail() {
     }
     setMatchStatus('loading');
     try {
-      const data = await api.getAiMatches(id);
+      const data = await productService.getAiMatches(id);
       setMatches(data);
       setMatchesVisible(true);
       setMatchStatus('ready');

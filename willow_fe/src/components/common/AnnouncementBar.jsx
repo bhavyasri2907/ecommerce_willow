@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from './NavIcons.jsx';
+import { ChevronLeftIcon, ChevronRightIcon } from '../../assets/icons/NavIcons.jsx';
 
 const ANNOUNCEMENTS = [
   'FREE SHIPPING ON ORDERS OVER $150 | EASY RETURNS | WORLDWIDE DELIVERY',

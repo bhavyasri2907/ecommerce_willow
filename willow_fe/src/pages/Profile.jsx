@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
-import Garment from '../icons/Garment.jsx';
+import Garment from '../assets/icons/Garment.jsx';
 
-export default function Account() {
+export default function Profile() {
   const navigate = useNavigate();
   const {
     wishlistCount,

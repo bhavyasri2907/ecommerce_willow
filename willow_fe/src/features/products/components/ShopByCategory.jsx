@@ -7,7 +7,7 @@ import {
   AccessoriesCategoryIcon,
   NewInCategoryIcon,
   SaleCategoryIcon,
-} from './CategoryIcons.jsx';
+} from '../../../assets/icons/CategoryIcons.jsx';
 
 const CATEGORIES = [
   { id: 'dresses', label: 'DRESSES', icon: DressCategoryIcon, filterType: 'TOP' },

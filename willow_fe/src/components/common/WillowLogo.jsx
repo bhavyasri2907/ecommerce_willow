@@ -1,4 +1,4 @@
-import willowLogoImg from '../assets/willow logo.png';
+import willowLogoImg from '../../assets/images/willow-logo.png';
 
 export default function WillowLogo({ className = '', height = 58 }) {
   return (

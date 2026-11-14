@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import footerBg from '../assets/footer.png';
+import footerBg from '../../assets/images/footer.png';
 import WillowLogo from './WillowLogo.jsx';
 
 export default function Footer() {
