@@ -1,13 +1,17 @@
 package com.cara.service;
 
 import com.cara.dto.ProductDto;
+import com.cara.exception.NotFoundException;
 import com.cara.model.Product;
+import com.cara.model.ProductStatus;
 import com.cara.model.ProductType;
 import com.cara.repository.ProductRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** Storefront (public) product reads. Only LIVE products are listed to shoppers. */
 @Service
 public class ProductService {
 
@@ -17,22 +21,18 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ProductDto> findAll(ProductType type) {
         List<Product> products = (type == null)
-                ? productRepository.findAll()
-                : productRepository.findByType(type);
+                ? productRepository.findByStatus(ProductStatus.LIVE)
+                : productRepository.findByTypeAndStatus(type, ProductStatus.LIVE);
         return products.stream().map(ProductDto::from).toList();
     }
 
+    @Transactional(readOnly = true)
     public ProductDto findById(Long id) {
         Product p = productRepository.findById(id)
-                .orElseThrow(() -> new NoSuchProductException(id));
+                .orElseThrow(() -> new NotFoundException("product", id));
         return ProductDto.from(p);
-    }
-
-    public static class NoSuchProductException extends RuntimeException {
-        public NoSuchProductException(Long id) {
-            super("No product with id " + id);
-        }
     }
 }

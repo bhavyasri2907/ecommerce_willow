@@ -6,6 +6,7 @@ import com.cara.model.Product;
 import com.cara.model.Recommendation;
 import com.cara.repository.RecommendationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Set;
@@ -28,6 +29,7 @@ public class AiMatchService {
         this.recommendationRepository = recommendationRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<MatchDto> matchesFor(Long topId) {
         List<Recommendation> approved = recommendationRepository.findByTopId(topId);
 
