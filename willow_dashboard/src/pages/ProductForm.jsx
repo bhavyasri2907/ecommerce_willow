@@ -11,7 +11,8 @@ import { Field, Input, Select, Textarea } from '../components/ui/Form.jsx';
 import { ProductStatusBadge, StockBadge } from '../components/ui/Badge.jsx';
 import { ErrorState, SkeletonRows } from '../components/ui/States.jsx';
 import ProductThumb from '../components/ui/ProductThumb.jsx';
-import { PRODUCT_TYPES, SIZE_PRESETS, STYLES, SWATCHES, typeLabel } from '../utils/constants.js';
+import { SIZE_PRESETS, STYLES, SWATCHES } from '../utils/constants.js';
+import { useCategories } from '../hooks/useCategories.js';
 import { formatCurrency, formatDateTime, formatNumber } from '../utils/format.js';
 
 const EMPTY = {
@@ -67,6 +68,7 @@ export default function ProductForm() {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const toast = useToast();
+  const { categories, labelOf } = useCategories();
 
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
@@ -186,7 +188,7 @@ export default function ProductForm() {
               </Field>
               <Field label="Category" required error={errors.type}>
                 {(fid) => (
-                  <Select id={fid} value={form.type} onChange={(e) => { set('type')(e.target.value); set('sizes')([]); }} options={PRODUCT_TYPES} />
+                  <Select id={fid} value={form.type} onChange={(e) => { set('type')(e.target.value); set('sizes')([]); }} options={categories} />
                 )}
               </Field>
               <Field label="Style" error={errors.style}>
@@ -307,7 +309,7 @@ export default function ProductForm() {
                 <ProductThumb product={preview} size={180} />
               </div>
               <div className="preview__body">
-                <div className="preview__meta">{typeLabel(form.type)}{form.style ? ` · ${form.style}` : ''}</div>
+                <div className="preview__meta">{labelOf(form.type)}{form.style ? ` · ${form.style}` : ''}</div>
                 <div className="preview__name">{form.name || 'Product name'}</div>
                 <div className="preview__price">
                   {formatCurrency(preview.price)}

@@ -1,15 +1,5 @@
 export const STOREFRONT_URL = import.meta.env.VITE_STOREFRONT_URL || 'http://localhost:5173';
 
-export const PRODUCT_TYPES = [
-  { value: 'TOP', label: 'Tops' },
-  { value: 'PANTS', label: 'Bottoms' },
-  { value: 'SHOES', label: 'Footwear' },
-  { value: 'BAG', label: 'Bags' },
-  { value: 'ACCESSORY', label: 'Accessories' },
-];
-
-export const typeLabel = (type) => PRODUCT_TYPES.find((t) => t.value === type)?.label ?? type;
-
 /** Size presets offered on the product form, per category. */
 export const SIZE_PRESETS = {
   TOP: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],

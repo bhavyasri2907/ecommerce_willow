@@ -16,7 +16,7 @@ import Pagination from '../components/ui/Pagination.jsx';
 import Menu from '../components/ui/Menu.jsx';
 import { ConfirmDialog } from '../components/ui/Overlay.jsx';
 import { EmptyState, ErrorState, SkeletonRows } from '../components/ui/States.jsx';
-import { PRODUCT_TYPES, typeLabel } from '../utils/constants.js';
+import { useCategories } from '../hooks/useCategories.js';
 import { formatCurrency, formatNumber } from '../utils/format.js';
 
 const TAB_FILTERS = {
@@ -55,6 +55,7 @@ export default function Products() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const toast = useToast();
+  const { categories, labelOf } = useCategories();
 
   const type = params.get('type') || '';
   const tab = params.get('tab') || 'all';
@@ -109,7 +110,7 @@ export default function Products() {
   const rows = products.data?.content ?? [];
   const allSelected = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const someSelected = rows.some((r) => selected.has(r.id));
-  const heading = type ? typeLabel(type) : 'Products';
+  const heading = type ? labelOf(type) : 'Products';
   const tabLabel = tabs.find((t) => t.value === tab)?.label;
 
   const toggleSort = (key) => update({ sort: key, dir: sort === key && dir === 'desc' ? 'asc' : 'desc' });
@@ -193,7 +194,7 @@ export default function Products() {
               value={type}
               onChange={(e) => update({ type: e.target.value })}
               placeholder="All categories"
-              options={PRODUCT_TYPES}
+              options={categories}
             />
           </div>
         </div>

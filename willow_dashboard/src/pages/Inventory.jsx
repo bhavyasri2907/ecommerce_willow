@@ -15,7 +15,8 @@ import ProductThumb from '../components/ui/ProductThumb.jsx';
 import KpiCard from '../components/ui/KpiCard.jsx';
 import { Modal } from '../components/ui/Overlay.jsx';
 import { EmptyState, ErrorState, SkeletonRows } from '../components/ui/States.jsx';
-import { MOVEMENT_LABELS, PRODUCT_TYPES, STOCK_REASONS } from '../utils/constants.js';
+import { MOVEMENT_LABELS, STOCK_REASONS } from '../utils/constants.js';
+import { useCategories } from '../hooks/useCategories.js';
 import { formatCurrencyCompact, formatNumber, timeAgo } from '../utils/format.js';
 
 function StockMeter({ stock, threshold }) {
@@ -109,6 +110,7 @@ function AdjustModal({ item, onClose }) {
 
 export default function Inventory() {
   const [params, setParams] = useSearchParams();
+  const { categories } = useCategories();
   const filter = params.get('filter') || 'all';
   const type = params.get('type') || '';
   const adjustId = params.get('adjust');
@@ -173,7 +175,7 @@ export default function Inventory() {
               <h2 className="table-toolbar__title">{formatNumber(rows.length)} Products</h2>
               <p className="table-toolbar__sub">Most urgent first · velocity and cover based on the last 30 days</p>
             </div>
-            <Select aria-label="Category" value={type} onChange={(e) => setParam('type', e.target.value)} placeholder="All categories" options={PRODUCT_TYPES} />
+            <Select aria-label="Category" value={type} onChange={(e) => setParam('type', e.target.value)} placeholder="All categories" options={categories} />
           </div>
 
           {all.error ? (

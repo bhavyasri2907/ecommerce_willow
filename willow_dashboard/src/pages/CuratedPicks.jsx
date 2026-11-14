@@ -11,16 +11,20 @@ import { SearchInput } from '../components/ui/Form.jsx';
 import { CountPill, ProductStatusBadge, StockBadge } from '../components/ui/Badge.jsx';
 import ProductThumb from '../components/ui/ProductThumb.jsx';
 import { EmptyState, ErrorState, SkeletonRows } from '../components/ui/States.jsx';
-import { PRODUCT_TYPES } from '../utils/constants.js';
+import { useCategories } from '../hooks/useCategories.js';
 import { formatCurrency } from '../utils/format.js';
 
-const MATCH_TYPES = PRODUCT_TYPES.filter((t) => t.value !== 'TOP');
+/** Tops are the anchor of every pairing; every other category can be matched to one. */
+const ANCHOR_TYPE = 'TOP';
 
 export default function CuratedPicks() {
   const toast = useToast();
   const [params, setParams] = useSearchParams();
   const [topSearch, setTopSearch] = useState('');
-  const [category, setCategory] = useState('PANTS');
+  const { categories } = useCategories();
+  const matchTypes = useMemo(() => categories.filter((c) => c.value !== ANCHOR_TYPE), [categories]);
+  const [chosenCategory, setCategory] = useState(null);
+  const category = chosenCategory ?? matchTypes[0]?.value;
   // Optimistic overrides keyed "topId:matchId" -> approved?, cleared whenever fresh data arrives.
   const [overrides, setOverrides] = useState({});
 
@@ -178,7 +182,7 @@ export default function CuratedPicks() {
                   value={category}
                   onChange={setCategory}
                   ariaLabel="Category"
-                  tabs={MATCH_TYPES.map((t) => ({ value: t.value, label: t.label, count: countsByType[t.value] ?? 0 }))}
+                  tabs={matchTypes.map((t) => ({ value: t.value, label: t.label, count: countsByType[t.value] ?? 0 }))}
                 />
                 {candidates.length === 0 ? (
                   <EmptyState title="No products in this category" description="Add some from the Products page." />

@@ -12,7 +12,7 @@ import java.time.Instant;
 })
 public class Product {
 
-    /** Seeded rows use hand-picked ids (101, 201, ...); new products start at 1000. */
+    /** Product ids start at 1000. */
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_seq")
     @SequenceGenerator(name = "product_seq", sequenceName = "product_seq", initialValue = 1000, allocationSize = 1)

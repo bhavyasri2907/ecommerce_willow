@@ -5,7 +5,7 @@ import com.cara.model.PaymentMethod;
 import java.util.List;
 import java.util.Random;
 
-/** Realistic customer details for seeded history and simulated live orders. */
+/** Customer details for the opt-in live order simulator (Settings > Developer tools). */
 public final class SampleCustomers {
 
     public record Customer(String name, String email, String phone, String city, String address) {}
