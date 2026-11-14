@@ -6,7 +6,7 @@ Real-time seller dashboard for Willow. A React + Vite app that talks to `willow_
 
 ```bash
 # 1. Backend (from willow_be) - port 8080
-mvn spring-boot:run          # or run CaraApplication from IntelliJ
+mvn spring-boot:run          # or run WillowApplication from IntelliJ
 
 # 2. Dashboard (from willow_dashboard) - port 5174
 npm install
