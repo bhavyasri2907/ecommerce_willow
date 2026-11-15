@@ -7,11 +7,8 @@ export function CartProvider({ children }) {
   const [items, setItems] = useState({});
   const [isOpen, setIsOpen] = useState(false);
 
-  // Wishlist State: { [productId]: product }
-  const [wishlist, setWishlist] = useState({
-    101: { id: 101, name: 'Blue Crop Top', type: 'TOP', color: 'Blue', hex: '#5C7AA6', style: 'Casual', price: 999, description: 'A relaxed cotton crop top with a soft drape.' },
-    203: { id: 203, name: 'Light Blue Jeans', type: 'PANTS', color: 'Light Blue', hex: '#9DB3C8', style: 'Casual', price: 1799, description: 'Softly faded straight jeans.' }
-  });
+  // Wishlist: { [productId]: product }. Starts empty; filled by the heart buttons.
+  const [wishlist, setWishlist] = useState({});
 
   // Seller Uploaded Products & Outfit Pairings State
   const [sellerProducts, setSellerProducts] = useState([]);

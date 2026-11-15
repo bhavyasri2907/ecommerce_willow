@@ -5,6 +5,7 @@ import App from './App.jsx';
 import { CartProvider } from './context/CartContext.jsx';
 import './styles/global.css';
 import './styles/account.css';
+import './styles/wishlist.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
