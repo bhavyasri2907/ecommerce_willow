@@ -3,16 +3,15 @@ import { useCart } from '../../../context/CartContext.jsx';
 import Garment from '../../../assets/icons/Garment.jsx';
 
 export default function CartDrawer() {
-  const { items, total, isOpen, setIsOpen, changeQty, removeItem, clearCart } = useCart();
+  const { items, total, isOpen, setIsOpen, changeQty, removeItem } = useCart();
   const navigate = useNavigate();
   const entries = Object.values(items);
 
   if (!isOpen) return null;
 
-  function handleCheckout() {
-    clearCart();
+  function viewBag() {
     setIsOpen(false);
-    navigate('/checkout');
+    navigate('/cart');
   }
 
   return (
@@ -53,7 +52,7 @@ export default function CartDrawer() {
               <span>Total</span>
               <span>₹{total.toLocaleString('en-IN')}</span>
             </div>
-            <button className="checkout-btn" onClick={handleCheckout}>Checkout</button>
+            <button className="checkout-btn" onClick={viewBag}>View Bag</button>
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@ import { createContext, useContext, useMemo, useState } from 'react';
 const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
-  // { [productId]: { product, qty } }
+  // { [productId]: { product, qty, size } }
   const [items, setItems] = useState({});
   const [isOpen, setIsOpen] = useState(false);
 
@@ -32,7 +32,11 @@ export function CartProvider({ children }) {
       const existing = prev[product.id];
       return {
         ...prev,
-        [product.id]: { product, qty: (existing?.qty || 0) + 1 },
+        [product.id]: {
+          product,
+          qty: (existing?.qty || 0) + 1,
+          size: existing?.size ?? product.sizes?.[0] ?? null,
+        },
       };
     });
     setIsOpen(true);
@@ -53,6 +57,23 @@ export function CartProvider({ children }) {
     });
   }
 
+  /** Sets an exact quantity (bag page dropdown). */
+  function setQty(productId, qty) {
+    setItems((prev) => (prev[productId] ? { ...prev, [productId]: { ...prev[productId], qty } } : prev));
+  }
+
+  function setSize(productId, size) {
+    setItems((prev) => (prev[productId] ? { ...prev, [productId]: { ...prev[productId], size } } : prev));
+  }
+
+  function removeItems(productIds) {
+    setItems((prev) => {
+      const next = { ...prev };
+      productIds.forEach((id) => delete next[id]);
+      return next;
+    });
+  }
+
   function removeItem(productId) {
     setItems((prev) => {
       const next = { ...prev };
@@ -66,6 +87,14 @@ export function CartProvider({ children }) {
   }
 
   // Wishlist Handlers
+  function addToWishlist(products) {
+    setWishlist((prev) => {
+      const next = { ...prev };
+      products.forEach((p) => { next[p.id] = p; });
+      return next;
+    });
+  }
+
   function toggleWishlist(product) {
     setWishlist((prev) => {
       const next = { ...prev };
@@ -117,12 +146,16 @@ export function CartProvider({ children }) {
     setIsOpen,
     addToCart,
     changeQty,
+    setQty,
+    setSize,
+    removeItems,
     removeItem,
     clearCart,
     // Wishlist
     wishlist,
     wishlistCount,
     toggleWishlist,
+    addToWishlist,
     isInWishlist,
     // Seller Studio & Outfit Curations
     sellerProducts,

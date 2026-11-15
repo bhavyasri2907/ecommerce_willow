@@ -1,6 +1,7 @@
 package com.willow.service;
 
 import com.willow.dto.response.SellerSettingsDto;
+import com.willow.dto.response.StorePoliciesDto;
 import com.willow.dto.response.StoreProfileDto;
 import com.willow.event.LiveEvent;
 import com.willow.event.LiveEventPublisher;
@@ -73,6 +74,12 @@ public class StoreService {
         SellerSettingsDto dto = SellerSettingsDto.from(settingsRepository.saveAndFlush(s));
         events.publish(LiveEvent.SETTINGS_UPDATED, dto);
         return dto;
+    }
+
+    /** Shipping charges and return window, as shown to shoppers. */
+    @Transactional
+    public StorePoliciesDto getPolicies() {
+        return StorePoliciesDto.from(settings());
     }
 
     /** Settings entity for internal use by other services. */

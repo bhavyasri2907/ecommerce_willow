@@ -8,6 +8,7 @@ import Account from '../pages/Account.jsx';
 import AccountOverview from '../features/account/components/AccountOverview.jsx';
 import AccountSection from '../features/account/components/AccountSection.jsx';
 import SellerStudio from '../pages/SellerStudio.jsx';
+import Cart from '../pages/Cart.jsx';
 import Checkout from '../pages/Checkout.jsx';
 import { CATEGORY_PAGES } from '../utils/constants.js';
 
@@ -26,6 +27,7 @@ export default function AppRoutes() {
           <Route path=":section" element={<AccountSection />} />
         </Route>
         <Route path="/studio" element={<SellerStudio />} />
+        <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
       </Route>
     </Routes>

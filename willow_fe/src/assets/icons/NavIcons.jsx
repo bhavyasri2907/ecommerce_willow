@@ -10,8 +10,8 @@ export function SearchIcon({ className = '', size = 20, color = 'currentColor' }
 export function UserIcon({ className = '', size = 20, color = 'currentColor' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-      <circle cx="12" cy="7" r="4"></circle>
+      <circle cx="12" cy="7.5" r="3.75"></circle>
+      <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0z"></path>
     </svg>
   );
 }
@@ -20,6 +20,16 @@ export function HeartIcon({ className = '', size = 20, color = 'currentColor' })
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.78-8.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+    </svg>
+  );
+}
+
+export function ShoppingCartIcon({ className = '', size = 20, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <circle cx="8.5" cy="20.5" r="1.25"></circle>
+      <circle cx="18" cy="20.5" r="1.25"></circle>
+      <path d="M2 3h2.4l2.5 12.1a1.8 1.8 0 0 0 1.77 1.4h9.1a1.8 1.8 0 0 0 1.76-1.4L21.2 7.5H5.3"></path>
     </svg>
   );
 }

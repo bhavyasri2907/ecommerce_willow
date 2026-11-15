@@ -7,7 +7,7 @@ import {
   SearchIcon,
   UserIcon,
   HeartIcon,
-  ShoppingBagIcon,
+  ShoppingCartIcon,
   MenuIcon,
   CloseIcon,
 } from '../../assets/icons/NavIcons.jsx';
@@ -23,8 +23,16 @@ const NAV_CATEGORIES = [
   { name: 'SALE', path: '/sale', isSale: true },
 ];
 
+const ICON_SIZE = 24;
+
+/** Count bubble on a navbar icon. Hidden at zero; large counts collapse to 99+. */
+function CountBadge({ count }) {
+  if (!count) return null;
+  return <span className="icon-badge">{count > 99 ? '99+' : count}</span>;
+}
+
 export default function Navbar() {
-  const { count, wishlistCount, setIsOpen } = useCart();
+  const { count, wishlistCount } = useCart();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,7 +95,7 @@ export default function Navbar() {
             title="Search"
             aria-label="Search items"
           >
-            <SearchIcon size={20} color="#2C181E" />
+            <SearchIcon size={ICON_SIZE} />
           </button>
 
           {/* User Account Action */}
@@ -95,10 +103,10 @@ export default function Navbar() {
             type="button"
             className="icon-action-btn desktop-only"
             onClick={() => navigate('/account')}
-            title="Account & Seller Portal"
-            aria-label="User Account"
+            title="My Account"
+            aria-label="My Account"
           >
-            <UserIcon size={20} color="#2C181E" />
+            <UserIcon size={ICON_SIZE} />
           </button>
 
           {/* Wishlist Action */}
@@ -107,22 +115,22 @@ export default function Navbar() {
             className="icon-action-btn desktop-only badge-btn"
             onClick={() => navigate('/wishlist')}
             title="Wishlist"
-            aria-label="View Wishlist"
+            aria-label={`Wishlist, ${wishlistCount} item${wishlistCount === 1 ? '' : 's'}`}
           >
-            <HeartIcon size={20} color="#2C181E" />
-            {wishlistCount > 0 && <span className="icon-badge wishlist-badge">{wishlistCount}</span>}
+            <HeartIcon size={ICON_SIZE} />
+            <CountBadge count={wishlistCount} />
           </button>
 
           {/* Shopping Bag / Cart Action */}
           <button
             type="button"
             className="icon-action-btn bag-action-btn badge-btn"
-            onClick={() => setIsOpen(true)}
+            onClick={() => navigate('/cart')}
             title="Shopping Bag"
-            aria-label="Open Shopping Bag"
+            aria-label={`Shopping bag, ${count} item${count === 1 ? '' : 's'}`}
           >
-            <ShoppingBagIcon size={22} color="#2C181E" />
-            <span className="icon-badge cart-badge">{count}</span>
+            <ShoppingCartIcon size={ICON_SIZE} />
+            <CountBadge count={count} />
           </button>
         </div>
       </nav>
@@ -171,8 +179,11 @@ export default function Navbar() {
             </div>
 
             <div className="mobile-footer-actions">
-              <Link to="/" className="mobile-action-link" onClick={() => setMobileMenuOpen(false)}>
-                <UserIcon size={18} /> My Account
+              <Link to="/account" className="mobile-action-link" onClick={() => setMobileMenuOpen(false)}>
+                <UserIcon size={20} /> My Account
+              </Link>
+              <Link to="/wishlist" className="mobile-action-link" onClick={() => setMobileMenuOpen(false)}>
+                <HeartIcon size={20} /> Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ''}
               </Link>
             </div>
           </div>

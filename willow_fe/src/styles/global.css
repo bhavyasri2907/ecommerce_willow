@@ -188,16 +188,20 @@ button {
   align-items: center;
   justify-content: center;
   color: var(--nav-text);
-  opacity: 0.88;
   position: relative;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
   border-radius: 50%;
 }
 
 .icon-action-btn:hover {
-  opacity: 1;
+  color: var(--badge-bg);
   transform: translateY(-1px);
-  background-color: rgba(44, 24, 30, 0.05);
+  background-color: rgba(140, 45, 66, 0.08);
+}
+
+.icon-action-btn:focus-visible {
+  outline: 2px solid var(--badge-bg);
+  outline-offset: 2px;
 }
 
 /* Badges for Wishlist & Cart Bag */
@@ -207,25 +211,22 @@ button {
 
 .icon-badge {
   position: absolute;
-  top: -2px;
-  right: -4px;
+  top: -3px;
+  right: -5px;
   background-color: var(--badge-bg);
   color: var(--badge-text);
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
-  min-width: 17px;
-  height: 17px;
-  border-radius: 50%;
+  line-height: 1;
+  min-width: 19px;
+  height: 19px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 3px;
-  border: 1.5px solid var(--tulip-pink);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.wishlist-badge {
-  background-color: #5C2332;
+  padding: 0 4px;
+  /* Ring in the navbar colour so the bubble reads as sitting on top of the icon. */
+  border: 2px solid var(--tulip-pink);
 }
 
 /* Mobile Menu Button */
@@ -345,6 +346,9 @@ button {
 }
 
 .mobile-footer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
   margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid var(--line);
