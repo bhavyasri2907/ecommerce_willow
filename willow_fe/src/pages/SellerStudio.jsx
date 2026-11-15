@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { api } from '../api/client.js';
-import Garment from '../icons/Garment.jsx';
+import { productService } from '../services/productService.js';
+import Garment from '../assets/icons/Garment.jsx';
 
 export default function SellerStudio() {
   const [tops, setTops] = useState([]);
@@ -9,13 +9,13 @@ export default function SellerStudio() {
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
-    Promise.all([api.listProducts('TOP'), api.listProducts('PANTS')])
+    Promise.all([productService.listProducts('TOP'), productService.listProducts('PANTS')])
       .then(async ([topList, pantsList]) => {
         setTops(topList);
         setPants(pantsList);
         const entries = await Promise.all(
           topList.map(async (t) => {
-            const matches = await api.getAiMatches(t.id);
+            const matches = await productService.getAiMatches(t.id);
             return [t.id, new Set(matches.map((m) => m.product.id))];
           })
         );
@@ -35,8 +35,8 @@ export default function SellerStudio() {
     setApprovedByTop((prev) => ({ ...prev, [topId]: nextSet }));
 
     try {
-      if (isOn) await api.revokeMatch(topId, pantId);
-      else await api.approveMatch(topId, pantId);
+      if (isOn) await productService.revokeMatch(topId, pantId);
+      else await productService.approveMatch(topId, pantId);
     } catch {
       // roll back on failure
       setApprovedByTop((prev) => ({ ...prev, [topId]: current }));
@@ -47,7 +47,7 @@ export default function SellerStudio() {
   if (status === 'error') {
     return (
       <p className="state-msg">
-        Couldn't reach the Cara API. Make sure the Spring Boot backend is running on
+        Couldn't reach the Willow API. Make sure the Spring Boot backend is running on
         http://localhost:8080.
       </p>
     );
@@ -58,7 +58,7 @@ export default function SellerStudio() {
       <div className="studio-intro">
         <h1>Seller Studio</h1>
         <p>
-          Choose which pants Cara is allowed to suggest for each top. The style assistant only
+          Choose which pants Willow is allowed to suggest for each top. The style assistant only
           ever recommends what you tick here — it never invents a pairing on its own.
         </p>
       </div>

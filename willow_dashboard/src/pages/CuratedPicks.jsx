@@ -1,18 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Check, Plus, Sparkles, X } from 'lucide-react';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from '../hooks/useQuery.js';
-import { useToast } from '../components/toast/ToastProvider.jsx';
-import PageHeader from '../components/ui/PageHeader.jsx';
-import { Card, CardHeader } from '../components/ui/Card.jsx';
-import { Tabs } from '../components/ui/Tabs.jsx';
-import { SearchInput } from '../components/ui/Form.jsx';
-import { CountPill, ProductStatusBadge, StockBadge } from '../components/ui/Badge.jsx';
-import ProductThumb from '../components/ui/ProductThumb.jsx';
-import { EmptyState, ErrorState, SkeletonRows } from '../components/ui/States.jsx';
+import { curationService } from '../services/curationService.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useToast } from '../context/ToastProvider.jsx';
+import PageHeader from '../components/common/PageHeader.jsx';
+import { Card, CardHeader } from '../components/common/Card.jsx';
+import { Tabs } from '../components/common/Tabs.jsx';
+import { SearchInput } from '../components/common/Input.jsx';
+import { CountPill } from '../components/common/Badge.jsx';
+import ProductStatusBadge from '../components/products/ProductStatusBadge.jsx';
+import StockBadge from '../components/inventory/StockBadge.jsx';
+import ProductThumb from '../components/common/ProductThumb.jsx';
+import EmptyState from '../components/common/EmptyState.jsx';
+import ErrorState from '../components/common/ErrorState.jsx';
+import { SkeletonRows } from '../components/common/Loader.jsx';
 import { useCategories } from '../hooks/useCategories.js';
-import { formatCurrency } from '../utils/format.js';
+import { formatPrice } from '../utils/formatPrice.js';
 
 /** Tops are the anchor of every pairing; every other category can be matched to one. */
 const ANCHOR_TYPE = 'TOP';
@@ -28,7 +32,7 @@ export default function CuratedPicks() {
   // Optimistic overrides keyed "topId:matchId" -> approved?, cleared whenever fresh data arrives.
   const [overrides, setOverrides] = useState({});
 
-  const board = useQuery((signal) => sellerApi.curations(signal), [], { live: ['curation.', 'product.'] });
+  const board = useFetch((signal) => curationService.listCurations(signal), [], { live: ['curation.', 'product.'] });
   useEffect(() => setOverrides({}), [board.data]);
 
   const tops = board.data?.tops ?? [];
@@ -60,8 +64,8 @@ export default function CuratedPicks() {
     const on = !approvedIds.has(match.id);
     setOverrides((o) => ({ ...o, [`${topId}:${match.id}`]: on }));
     try {
-      if (on) await sellerApi.approvePick(topId, match.id);
-      else await sellerApi.revokePick(topId, match.id);
+      if (on) await curationService.approvePick(topId, match.id);
+      else await curationService.revokePick(topId, match.id);
       toast.success(on ? 'Pick approved' : 'Pick removed', `${match.name} ${on ? 'will now be suggested with' : 'is no longer suggested with'} ${selected.top.name}`);
     } catch (err) {
       setOverrides((o) => {
@@ -112,7 +116,7 @@ export default function CuratedPicks() {
                       <ProductThumb product={top} size={40} />
                       <span className="curate__top-text">
                         <strong>{top.name}</strong>
-                        <span>{top.style ?? 'Top'} · {formatCurrency(top.price)}</span>
+                        <span>{top.style ?? 'Top'} · {formatPrice(top.price)}</span>
                       </span>
                       <CountPill value={matches.length} tone={matches.length ? 'accent' : 'neutral'} />
                     </button>
@@ -130,7 +134,7 @@ export default function CuratedPicks() {
                   <ProductThumb product={selected.top} size={72} />
                   <div className="curate__hero-text">
                     <h2>{selected.top.name}</h2>
-                    <p className="muted">{[selected.top.color, selected.top.style, formatCurrency(selected.top.price)].filter(Boolean).join(' · ')}</p>
+                    <p className="muted">{[selected.top.color, selected.top.style, formatPrice(selected.top.price)].filter(Boolean).join(' · ')}</p>
                     <div className="row-gap">
                       <ProductStatusBadge status={selected.top.status} />
                       <StockBadge status={selected.top.stockStatus} />
@@ -195,7 +199,7 @@ export default function CuratedPicks() {
                           <span className="candidate__check" aria-hidden>{on ? <Check size={14} strokeWidth={3} /> : <Plus size={14} />}</span>
                           <ProductThumb product={c} size={64} />
                           <span className="candidate__name">{c.name}</span>
-                          <span className="candidate__meta">{formatCurrency(c.price)}{c.status !== 'LIVE' ? ' · Draft' : ''}</span>
+                          <span className="candidate__meta">{formatPrice(c.price)}{c.status !== 'LIVE' ? ' · Draft' : ''}</span>
                         </button>
                       );
                     })}

@@ -1,0 +1,19 @@
+/* Design tokens: colours shared across the storefront. */
+:root {
+  --tulip-pink: #F7C5D1;
+  --tulip-pink-dark: #E49BAA;
+  --tulip-pink-light: #FDF2F4;
+  --announcement-bg: #3D1B25;
+  --announcement-text: #FADADD;
+  --nav-text: #2C181E;
+  --nav-text-hover: #7D2D40;
+  --badge-bg: #8C2D42;
+  --badge-text: #FFFFFF;
+  
+  --ink: #241F2E;
+  --paper: #FAF6F8;
+  --rose: #B4636F;
+  --sage: #7C8B6F;
+  --gold: #C9A24B;
+  --line: rgba(44, 24, 30, 0.12);
+}

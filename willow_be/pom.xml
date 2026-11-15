@@ -11,11 +11,11 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.cara</groupId>
+  <groupId>com.willow</groupId>
   <artifactId>willow_be</artifactId>
   <version>0.1.0</version>
-  <name>cara-backend</name>
-  <description>Cara e-commerce API — products, seller-curated recommendations, AI style assistant</description>
+  <name>willow-backend</name>
+  <description>Willow e-commerce API — products, seller-curated recommendations, AI style assistant</description>
 
   <properties>
     <java.version>21</java.version>

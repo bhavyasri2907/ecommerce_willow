@@ -1,5 +1,7 @@
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { formatCurrency, formatCurrencyCompact, formatDate, formatNumber } from '../../utils/format.js';
+import { formatPrice, formatPriceCompact } from '../../utils/formatPrice.js';
+import { formatDate } from '../../utils/formatDate.js';
+import { formatNumber } from '../../utils/formatNumber.js';
 
 const axisProps = {
   tickLine: false,
@@ -16,7 +18,7 @@ function ChartTooltip({ active, payload, label, metric }) {
       <div className="chart-tooltip__row">
         <span className="chart-tooltip__swatch" aria-hidden />
         {metric === 'revenue' ? 'Revenue' : 'Orders'}
-        <strong>{metric === 'revenue' ? formatCurrency(point.revenue) : formatNumber(point.orders)}</strong>
+        <strong>{metric === 'revenue' ? formatPrice(point.revenue) : formatNumber(point.orders)}</strong>
       </div>
       {metric === 'revenue' && (
         <div className="chart-tooltip__meta">
@@ -45,7 +47,7 @@ export function RevenueChart({ data, height = 280 }) {
           </defs>
           <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
           <XAxis dataKey="date" {...axisProps} tickFormatter={tickDate} minTickGap={28} />
-          <YAxis {...axisProps} tickFormatter={formatCurrencyCompact} width={56} />
+          <YAxis {...axisProps} tickFormatter={formatPriceCompact} width={56} />
           <Tooltip content={<ChartTooltip metric="revenue" />} cursor={{ stroke: 'var(--text-faint)', strokeDasharray: '3 3' }} />
           <Area
             type="monotone"

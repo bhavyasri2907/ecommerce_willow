@@ -13,3 +13,4 @@ willow_be/target/
 # Environment files
 .env
 .env.*
+!.env.example

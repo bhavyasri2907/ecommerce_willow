@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
 import { AtSign, Globe, Mail, MapPin, Phone, Save } from 'lucide-react';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from '../hooks/useQuery.js';
-import { useToast } from '../components/toast/ToastProvider.jsx';
-import PageHeader from '../components/ui/PageHeader.jsx';
-import Button from '../components/ui/Button.jsx';
-import { Card, CardHeader } from '../components/ui/Card.jsx';
-import { Field, Input, Textarea } from '../components/ui/Form.jsx';
-import { ErrorState, SkeletonRows } from '../components/ui/States.jsx';
-import { formatDateTime } from '../utils/format.js';
+import { storeService } from '../services/storeService.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useToast } from '../context/ToastProvider.jsx';
+import PageHeader from '../components/common/PageHeader.jsx';
+import Button from '../components/common/Button.jsx';
+import { Card, CardHeader } from '../components/common/Card.jsx';
+import { Field, Input, Textarea } from '../components/common/Input.jsx';
+import ErrorState from '../components/common/ErrorState.jsx';
+import { SkeletonRows } from '../components/common/Loader.jsx';
+import { formatDateTime } from '../utils/formatDate.js';
 
 const FIELDS = ['storeName', 'tagline', 'description', 'ownerName', 'contactEmail', 'contactPhone', 'addressLine', 'city', 'state', 'pincode', 'gstin', 'logoUrl', 'website', 'instagram'];
 
@@ -16,7 +17,7 @@ const toForm = (data) => Object.fromEntries(FIELDS.map((f) => [f, data?.[f] ?? '
 
 export default function StoreProfile() {
   const toast = useToast();
-  const profile = useQuery((signal) => sellerApi.storeProfile(signal), [], { live: ['store.'] });
+  const profile = useFetch((signal) => storeService.getStoreProfile(signal), [], { live: ['store.'] });
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -37,7 +38,7 @@ export default function StoreProfile() {
     if (!form.storeName.trim()) return setErrors({ storeName: 'Store name is required' });
     setSaving(true);
     try {
-      await sellerApi.updateStoreProfile({ ...form, gstin: form.gstin.toUpperCase() });
+      await storeService.updateStoreProfile({ ...form, gstin: form.gstin.toUpperCase() });
       setDirty(false);
       setErrors({});
       toast.success('Store profile saved');
