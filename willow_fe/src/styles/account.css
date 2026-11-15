@@ -1,0 +1,362 @@
+/* ==========================================================================
+   My Account: sidebar, greeting banner, quick links and section pages.
+   Colours come from variables.css (Willow plum / tulip pink).
+   ========================================================================== */
+
+.account {
+  --account-accent: var(--badge-bg);
+  --account-muted: rgba(44, 24, 30, 0.62);
+  --account-surface: #ffffff;
+  --account-radius: 18px;
+
+  display: grid;
+  grid-template-columns: 304px minmax(0, 1fr);
+  min-height: 72vh;
+}
+
+/* The account area runs edge to edge, so lift the page container's width limit and gutters. */
+main:has(> .account) {
+  max-width: none;
+  padding: 0;
+}
+
+.account__content {
+  padding: 36px 44px 96px 34px;
+}
+
+/* ---------- Sidebar ---------- */
+.account-sidebar {
+  padding: 44px 20px 48px;
+  border-right: 1px solid var(--line);
+}
+
+.account-sidebar__inner {
+  position: sticky;
+  top: 24px;
+}
+
+.account-profile {
+  margin-bottom: 28px;
+  padding: 0 18px;
+}
+
+.account-profile__avatar {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 92px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  background: var(--tulip-pink-light);
+  border: 1px solid rgba(140, 45, 66, 0.12);
+  color: var(--account-accent);
+}
+
+.account-profile__name {
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--nav-text);
+}
+
+.account-profile__email {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--account-muted);
+  overflow-wrap: anywhere;
+}
+
+.account-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.account-nav__link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--nav-text);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.account-nav__link svg {
+  flex-shrink: 0;
+}
+
+.account-nav__link:hover {
+  background: var(--tulip-pink-light);
+  color: var(--nav-text-hover);
+}
+
+.account-nav__link.is-active {
+  background: var(--tulip-pink-light);
+  color: var(--account-accent);
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(140, 45, 66, 0.1);
+}
+
+.account-nav__link:focus-visible,
+.quick-link:focus-visible,
+.account-empty__action:focus-visible {
+  outline: 2px solid var(--account-accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Greeting banner ---------- */
+.account-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 200px;
+  padding: 36px 176px 36px 32px;
+  overflow: hidden;
+  border-radius: var(--account-radius);
+  border: 1px solid rgba(140, 45, 66, 0.08);
+  background:
+    radial-gradient(circle at 88% 20%, rgba(247, 197, 209, 0.55), transparent 46%),
+    linear-gradient(120deg, var(--tulip-pink-light) 0%, #f9e3e8 100%);
+}
+
+.account-hero__eyebrow {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--nav-text-hover);
+}
+
+.account-hero__title {
+  font-size: 40px;
+  line-height: 1.1;
+  color: var(--nav-text);
+}
+
+.account-hero__sub {
+  margin: 14px 0 0;
+  font-size: 15px;
+  color: var(--account-muted);
+}
+
+.account-hero__note {
+  flex-shrink: 0;
+  margin: 0;
+  font-family: 'Fraunces', serif;
+  font-style: italic;
+  font-size: 21px;
+  line-height: 1.35;
+  text-align: center;
+  color: var(--nav-text-hover);
+  transform: rotate(-8deg);
+}
+
+.account-hero__note span {
+  font-style: normal;
+  font-size: 15px;
+  color: var(--rose);
+}
+
+.account-hero__branch {
+  position: absolute;
+  right: -8px;
+  bottom: -14px;
+  width: 184px;
+  height: 184px;
+  pointer-events: none;
+}
+
+.account-hero__stem {
+  fill: none;
+  stroke: var(--nav-text-hover);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.55;
+}
+
+.account-hero__leaf--dark { fill: var(--badge-bg); opacity: 0.78; }
+.account-hero__leaf--mid { fill: var(--rose); opacity: 0.72; }
+.account-hero__leaf--light { fill: var(--tulip-pink-dark); opacity: 0.85; }
+
+/* ---------- Quick links ---------- */
+.quick-links {
+  margin-top: 36px;
+}
+
+.quick-links__title {
+  margin-bottom: 18px;
+  font-size: 24px;
+  color: var(--nav-text);
+}
+
+.quick-links__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.quick-link {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 22px 24px;
+  border-radius: var(--account-radius);
+  border: 1px solid var(--line);
+  background: var(--account-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.quick-link:hover {
+  border-color: rgba(140, 45, 66, 0.28);
+  box-shadow: 0 10px 26px rgba(61, 27, 37, 0.08);
+  transform: translateY(-2px);
+}
+
+.quick-link__icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+}
+
+.quick-link__icon--plum { background: #f6dde3; color: var(--badge-bg); }
+.quick-link__icon--rose { background: #fbe6ea; color: var(--rose); }
+.quick-link__icon--sage { background: #e9eee5; color: #5f6f52; }
+.quick-link__icon--gold { background: #f8efd9; color: #9a7a2c; }
+
+.quick-link__text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.quick-link__label {
+  font-size: 16.5px;
+  font-weight: 600;
+  color: var(--nav-text);
+}
+
+.quick-link__desc {
+  font-size: 14px;
+  color: var(--account-muted);
+}
+
+.quick-link__chevron {
+  flex-shrink: 0;
+  color: var(--account-muted);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.quick-link:hover .quick-link__chevron {
+  color: var(--account-accent);
+  transform: translateX(3px);
+}
+
+/* ---------- Section pages (orders, addresses, ...) ---------- */
+.account-section__header {
+  margin-bottom: 24px;
+}
+
+.account-section__title {
+  font-size: 32px;
+  color: var(--nav-text);
+}
+
+.account-section__intro {
+  margin: 10px 0 0;
+  font-size: 15.5px;
+  color: var(--account-muted);
+}
+
+.account-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  text-align: center;
+  border-radius: var(--account-radius);
+  border: 1px dashed rgba(140, 45, 66, 0.22);
+  background: var(--account-surface);
+}
+
+.account-empty__title {
+  margin-top: 8px;
+  font-size: 21px;
+  color: var(--nav-text);
+}
+
+.account-empty__text {
+  max-width: 420px;
+  margin: 0;
+  font-size: 15px;
+  color: var(--account-muted);
+}
+
+.account-empty__action {
+  margin-top: 12px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: var(--account-accent);
+  color: var(--badge-text);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.account-empty__action:hover {
+  background: var(--nav-text-hover);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1080px) {
+  .account { grid-template-columns: 256px minmax(0, 1fr); }
+  .account-sidebar { padding: 36px 12px 40px; }
+  .account__content { padding: 28px 28px 80px 26px; }
+  .account-hero__note { display: none; }
+}
+
+@media (max-width: 860px) {
+  .account { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+
+  .account-sidebar {
+    padding: 24px 20px 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .account-sidebar__inner { position: static; }
+  .account__content { padding: 24px 20px 72px; }
+
+  .account-profile { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; padding: 0; }
+  .account-profile__avatar { width: 64px; height: 64px; margin-bottom: 0; }
+  .account-profile__avatar svg { width: 30px; height: 30px; }
+
+  .account-nav { flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 4px; }
+  .account-nav__link { flex-shrink: 0; padding: 10px 14px; white-space: nowrap; }
+}
+
+@media (max-width: 640px) {
+  .account-hero { padding: 28px 96px 28px 24px; min-height: 0; }
+  .account-hero__title { font-size: 30px; }
+  .account-hero__branch { width: 130px; height: 130px; opacity: 0.35; }
+  .quick-links__grid { grid-template-columns: minmax(0, 1fr); }
+  .quick-link { padding: 18px; gap: 16px; }
+  .quick-link__icon { width: 52px; height: 52px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .quick-link, .quick-link__chevron, .account-nav__link { transition: none; }
+  .quick-link:hover { transform: none; }
+}

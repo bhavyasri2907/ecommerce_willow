@@ -4,7 +4,9 @@ import Home from '../pages/Home.jsx';
 import Products from '../pages/Products.jsx';
 import ProductDetails from '../pages/ProductDetails.jsx';
 import Wishlist from '../pages/Wishlist.jsx';
-import Profile from '../pages/Profile.jsx';
+import Account from '../pages/Account.jsx';
+import AccountOverview from '../features/account/components/AccountOverview.jsx';
+import AccountSection from '../features/account/components/AccountSection.jsx';
 import SellerStudio from '../pages/SellerStudio.jsx';
 import Checkout from '../pages/Checkout.jsx';
 import { CATEGORY_PAGES } from '../utils/constants.js';
@@ -19,7 +21,10 @@ export default function AppRoutes() {
         ))}
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/account" element={<Profile />} />
+        <Route path="/account" element={<Account />}>
+          <Route index element={<AccountOverview />} />
+          <Route path=":section" element={<AccountSection />} />
+        </Route>
         <Route path="/studio" element={<SellerStudio />} />
         <Route path="/checkout" element={<Checkout />} />
       </Route>
