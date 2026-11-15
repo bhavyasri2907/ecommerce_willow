@@ -20,6 +20,8 @@ export default function Wishlist() {
 
       {items.length === 0 ? (
         <div className="wishlist-empty">
+          <h2 className="wishlist-empty__title">Your wishlist is empty</h2>
+          <p className="wishlist-empty__text">Tap the heart on any piece you love and it will be saved here for later.</p>
           <Link to="/all" className="wishlist-empty__action">Explore the collection</Link>
         </div>
       ) : (

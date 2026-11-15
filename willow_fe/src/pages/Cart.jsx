@@ -49,6 +49,8 @@ export default function Cart() {
       <div className="cart">
         <CheckoutSteps current="Bag" />
         <div className="cart-empty">
+          <h1 className="cart-empty__title">Your bag is empty</h1>
+          <p className="cart-empty__text">Add pieces you love and they will be waiting for you here.</p>
           <div className="cart-empty__actions">
             <Link to="/all" className="cart-empty__action">Explore the collection</Link>
             <Link to="/wishlist" className="cart-empty__action cart-empty__action--ghost">Add from wishlist</Link>
