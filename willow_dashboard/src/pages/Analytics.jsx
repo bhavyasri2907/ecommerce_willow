@@ -1,18 +1,21 @@
 import { useSearchParams } from 'react-router-dom';
 import { ClipboardList, IndianRupee, Package, ShoppingCart, Users } from 'lucide-react';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from '../hooks/useQuery.js';
-import PageHeader from '../components/ui/PageHeader.jsx';
-import { Card, CardHeader } from '../components/ui/Card.jsx';
-import { Segmented } from '../components/ui/Tabs.jsx';
-import KpiCard from '../components/ui/KpiCard.jsx';
-import ProductThumb from '../components/ui/ProductThumb.jsx';
-import { OrderStatusBadge } from '../components/ui/Badge.jsx';
-import { ErrorState, Skeleton, SkeletonRows } from '../components/ui/States.jsx';
+import { dashboardService } from '../services/dashboardService.js';
+import { useFetch } from '../hooks/useFetch.js';
+import PageHeader from '../components/common/PageHeader.jsx';
+import { Card, CardHeader } from '../components/common/Card.jsx';
+import { Segmented } from '../components/common/Tabs.jsx';
+import StatCard from '../components/overview/StatCard.jsx';
+import ProductThumb from '../components/common/ProductThumb.jsx';
+import OrderStatusBadge from '../components/orders/OrderStatusBadge.jsx';
+import ErrorState from '../components/common/ErrorState.jsx';
+import { Skeleton, SkeletonRows } from '../components/common/Loader.jsx';
 import { OrdersChart, RevenueChart } from '../components/charts/TimeSeriesChart.jsx';
 import BarList from '../components/charts/BarList.jsx';
-import { ORDER_STATUS, PAYMENT_LABELS } from '../utils/constants.js';
-import { formatCurrency, formatDate, formatNumber } from '../utils/format.js';
+import { ORDER_STATUS, PAYMENT_LABELS } from '../constants/orderStatus.js';
+import { formatPrice } from '../utils/formatPrice.js';
+import { formatDate } from '../utils/formatDate.js';
+import { formatNumber } from '../utils/formatNumber.js';
 
 const RANGES = [
   { value: '7', label: '7 days' },
@@ -23,7 +26,7 @@ const RANGES = [
 export default function Analytics() {
   const [params, setParams] = useSearchParams();
   const range = params.get('range') || '30';
-  const report = useQuery((signal) => sellerApi.analytics(range, signal), [range], { live: ['order.'] });
+  const report = useFetch((signal) => dashboardService.getAnalytics(range, signal), [range], { live: ['order.'] });
   const a = report.data;
   const k = a?.kpis;
   const vs = `vs previous ${range} days`;
@@ -45,11 +48,11 @@ export default function Analytics() {
       ) : (
         <>
           <div className="kpi-grid kpi-grid--5">
-            <KpiCard label="Revenue" icon={IndianRupee} loading={!k} value={k && formatCurrency(k.revenue.value)} current={k?.revenue.value} previous={k?.revenue.previous} spark={spark('revenue')} comparisonLabel={vs} />
-            <KpiCard label="Orders" icon={ShoppingCart} loading={!k} value={k && formatNumber(k.orders.value)} current={k?.orders.value} previous={k?.orders.previous} spark={spark('orders')} comparisonLabel={vs} />
-            <KpiCard label="Avg. order value" icon={ClipboardList} loading={!k} value={k && formatCurrency(k.averageOrderValue.value)} current={k?.averageOrderValue.value} previous={k?.averageOrderValue.previous} comparisonLabel={vs} />
-            <KpiCard label="Units sold" icon={Package} loading={!k} value={k && formatNumber(k.unitsSold.value)} current={k?.unitsSold.value} previous={k?.unitsSold.previous} spark={spark('units')} comparisonLabel={vs} />
-            <KpiCard label="Customers" icon={Users} loading={!k} value={k && formatNumber(k.customers.value)} current={k?.customers.value} previous={k?.customers.previous} comparisonLabel={vs} />
+            <StatCard label="Revenue" icon={IndianRupee} loading={!k} value={k && formatPrice(k.revenue.value)} current={k?.revenue.value} previous={k?.revenue.previous} spark={spark('revenue')} comparisonLabel={vs} />
+            <StatCard label="Orders" icon={ShoppingCart} loading={!k} value={k && formatNumber(k.orders.value)} current={k?.orders.value} previous={k?.orders.previous} spark={spark('orders')} comparisonLabel={vs} />
+            <StatCard label="Avg. order value" icon={ClipboardList} loading={!k} value={k && formatPrice(k.averageOrderValue.value)} current={k?.averageOrderValue.value} previous={k?.averageOrderValue.previous} comparisonLabel={vs} />
+            <StatCard label="Units sold" icon={Package} loading={!k} value={k && formatNumber(k.unitsSold.value)} current={k?.unitsSold.value} previous={k?.unitsSold.previous} spark={spark('units')} comparisonLabel={vs} />
+            <StatCard label="Customers" icon={Users} loading={!k} value={k && formatNumber(k.customers.value)} current={k?.customers.value} previous={k?.customers.previous} comparisonLabel={vs} />
           </div>
 
           <Card>
@@ -70,7 +73,7 @@ export default function Analytics() {
                     key: c.type,
                     label: c.label,
                     value: Number(c.revenue),
-                    display: formatCurrency(c.revenue),
+                    display: formatPrice(c.revenue),
                     sub: `${formatNumber(c.units)} units`,
                   }))}
                 />
@@ -115,7 +118,7 @@ export default function Analytics() {
                             </div>
                           </td>
                           <td className="num">{formatNumber(p.units)}</td>
-                          <td className="num strong">{formatCurrency(p.revenue)}</td>
+                          <td className="num strong">{formatPrice(p.revenue)}</td>
                           <td className="num muted">
                             {Number(k.revenue.value) ? `${((Number(p.revenue) / Number(k.revenue.value)) * 100).toFixed(1)}%` : '—'}
                           </td>
@@ -135,7 +138,7 @@ export default function Analytics() {
                     key: c.city,
                     label: c.city,
                     value: Number(c.revenue),
-                    display: formatCurrency(c.revenue),
+                    display: formatPrice(c.revenue),
                     sub: `${formatNumber(c.orders)} orders`,
                   }))}
                 />

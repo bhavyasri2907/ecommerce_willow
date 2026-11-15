@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Bell, Boxes, FlaskConical, Save, ShoppingCart, Truck } from 'lucide-react';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from '../hooks/useQuery.js';
-import { useToast } from '../components/toast/ToastProvider.jsx';
-import PageHeader from '../components/ui/PageHeader.jsx';
-import Button from '../components/ui/Button.jsx';
-import { Card, CardHeader } from '../components/ui/Card.jsx';
-import { Field, Input, Toggle } from '../components/ui/Form.jsx';
-import { ErrorState, SkeletonRows } from '../components/ui/States.jsx';
-import { formatCurrency, formatDateTime } from '../utils/format.js';
+import { storeService } from '../services/storeService.js';
+import { useFetch } from '../hooks/useFetch.js';
+import { useToast } from '../context/ToastProvider.jsx';
+import PageHeader from '../components/common/PageHeader.jsx';
+import Button from '../components/common/Button.jsx';
+import { Card, CardHeader } from '../components/common/Card.jsx';
+import { Field, Input, Toggle } from '../components/common/Input.jsx';
+import ErrorState from '../components/common/ErrorState.jsx';
+import { SkeletonRows } from '../components/common/Loader.jsx';
+import { formatPrice } from '../utils/formatPrice.js';
+import { formatDateTime } from '../utils/formatDate.js';
 
 export default function Settings() {
   const toast = useToast();
-  const settings = useQuery((signal) => sellerApi.settings(signal), [], { live: ['settings.'] });
+  const settings = useFetch((signal) => storeService.getSettings(signal), [], { live: ['settings.'] });
   const [form, setForm] = useState(null);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -39,7 +41,7 @@ export default function Settings() {
     };
     setSaving(true);
     try {
-      await sellerApi.updateSettings(body);
+      await storeService.updateSettings(body);
       setDirty(false);
       setErrors({});
       toast.success('Settings saved');
@@ -54,7 +56,7 @@ export default function Settings() {
   // The simulator is a dev tool: toggle it immediately rather than waiting for "Save".
   async function toggleSimulator(on) {
     try {
-      const updated = await sellerApi.updateSettings({ ...settings.data, simulateLiveOrders: on });
+      const updated = await storeService.updateSettings({ ...settings.data, simulateLiveOrders: on });
       setForm((f) => ({ ...f, simulateLiveOrders: updated.simulateLiveOrders }));
       toast.info(on ? 'Live order simulator on' : 'Live order simulator off', on ? 'A new storefront order arrives every few seconds.' : undefined);
     } catch (err) {
@@ -111,7 +113,7 @@ export default function Settings() {
           <CardHeader title="Shipping" subtitle="Charged at checkout" icon={Truck} />
           <div className="form-grid">
             {numberField('shippingFee', 'Shipping fee', { prefix: '₹' })}
-            {numberField('freeShippingThreshold', 'Free shipping from', { prefix: '₹', hint: `Orders of ${formatCurrency(form.freeShippingThreshold || 0)} or more ship free` })}
+            {numberField('freeShippingThreshold', 'Free shipping from', { prefix: '₹', hint: `Orders of ${formatPrice(form.freeShippingThreshold || 0)} or more ship free` })}
           </div>
         </Card>
 

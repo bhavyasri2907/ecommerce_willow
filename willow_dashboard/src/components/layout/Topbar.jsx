@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AlertTriangle, Bell, Menu as MenuIcon, Search, ShoppingBag } from 'lucide-react';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from '../hooks/useQuery.js';
-import { useLive } from '../live/LiveProvider.jsx';
-import { formatCurrency, timeAgo } from '../utils/format.js';
-import { navItemFor } from './navigation.js';
+import { storeService } from '../../services/storeService.js';
+import { useFetch } from '../../hooks/useFetch.js';
+import { useLive } from '../../context/LiveProvider.jsx';
+import { formatPrice } from '../../utils/formatPrice.js';
+import { timeAgo } from '../../utils/formatDate.js';
+import { navItemFor } from '../../constants/navItems.js';
 
 function NotificationsMenu() {
   const { feed, unread, markRead } = useLive();
@@ -52,7 +53,7 @@ function NotificationsMenu() {
                       <span className="notif__text">
                         <strong>{isOrder ? `New order ${p.orderNumber}` : p.stock === 0 ? `${p.name} sold out` : `${p.name} is low`}</strong>
                         <span>
-                          {isOrder ? `${p.customerName} · ${formatCurrency(p.total)}` : `${p.stock} left in stock`} · {timeAgo(event.at)}
+                          {isOrder ? `${p.customerName} · ${formatPrice(p.total)}` : `${p.stock} left in stock`} · {timeAgo(event.at)}
                         </span>
                       </span>
                     </button>
@@ -75,7 +76,7 @@ export default function Topbar({ onMenu }) {
   const item = navItemFor(location.pathname);
   const Icon = item?.icon;
 
-  const { data: store } = useQuery((signal) => sellerApi.storeProfile(signal), [], { live: ['store.'] });
+  const { data: store } = useFetch((signal) => storeService.getStoreProfile(signal), [], { live: ['store.'] });
 
   useEffect(() => {
     const onKey = (e) => {

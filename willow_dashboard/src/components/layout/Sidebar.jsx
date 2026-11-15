@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useSearchParams } from 'react-router-dom';
 import { ChevronDown, ExternalLink } from 'lucide-react';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from '../hooks/useQuery.js';
-import { useLive } from '../live/LiveProvider.jsx';
-import { CountPill } from '../components/ui/Badge.jsx';
-import { STOREFRONT_URL } from '../utils/constants.js';
-import { NAV_SECTIONS } from './navigation.js';
-import logo from '../assets/willow-logo.png';
+import { orderService } from '../../services/orderService.js';
+import { productService } from '../../services/productService.js';
+import { useFetch } from '../../hooks/useFetch.js';
+import { useLive } from '../../context/LiveProvider.jsx';
+import { CountPill } from '../common/Badge.jsx';
+import { STOREFRONT_URL } from '../../constants/config.js';
+import { NAV_SECTIONS } from '../../constants/navItems.js';
+import logo from '../../assets/images/willow-logo.png';
 
 const LIVE_LABEL = { live: 'Live updates on', connecting: 'Connecting…', offline: 'Offline' };
 
@@ -22,10 +23,10 @@ export default function Sidebar({ open, onNavigate }) {
     if (location.pathname.startsWith('/products')) setProductsOpen(true);
   }, [location.pathname]);
 
-  const { data: summary } = useQuery((signal) => sellerApi.productSummary(undefined, signal), [], {
+  const { data: summary } = useFetch((signal) => productService.getProductSummary(undefined, signal), [], {
     live: ['product.', 'inventory.', 'settings.'],
   });
-  const { data: orderCounts } = useQuery((signal) => sellerApi.orderCounts(signal), [], { live: ['order.'] });
+  const { data: orderCounts } = useFetch((signal) => orderService.getOrderCounts(signal), [], { live: ['order.'] });
 
   const stockAlerts = summary ? summary.lowStock + summary.outOfStock : undefined;
   const badges = {

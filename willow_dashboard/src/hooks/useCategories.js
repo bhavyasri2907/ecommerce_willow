@@ -1,13 +1,13 @@
 import { useCallback, useMemo } from 'react';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from './useQuery.js';
+import { productService } from '../services/productService.js';
+import { useFetch } from './useFetch.js';
 
 /**
  * Product categories as defined by the backend (willow_be's ProductType), with live
  * product counts. Nothing about the category list is hard-coded in the dashboard.
  */
 export function useCategories() {
-  const { data } = useQuery((signal) => sellerApi.productSummary(undefined, signal), [], { live: ['product.'] });
+  const { data } = useFetch((signal) => productService.getProductSummary(undefined, signal), [], { live: ['product.'] });
 
   const categories = useMemo(
     () => (data?.byType ?? []).map((t) => ({ value: t.type, label: t.label, count: t.count })),

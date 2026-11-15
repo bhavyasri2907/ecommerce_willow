@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import App from './App.jsx';
-import { LiveProvider } from './live/LiveProvider.jsx';
-import { ToastProvider } from './components/toast/ToastProvider.jsx';
 import './styles/index.css';
+import App from './App.jsx';
+import { LiveProvider } from './context/LiveProvider.jsx';
+import { ToastProvider } from './context/ToastProvider.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

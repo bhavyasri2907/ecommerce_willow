@@ -1,15 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { sellerApi } from '../api/seller.js';
-import { useQuery } from '../hooks/useQuery.js';
-import { useLiveEvent } from '../live/LiveProvider.jsx';
-import { useToast } from '../components/toast/ToastProvider.jsx';
-import { formatCurrency } from '../utils/format.js';
+import { storeService } from '../../services/storeService.js';
+import { useFetch } from '../../hooks/useFetch.js';
+import { useLiveEvent } from '../../context/LiveProvider.jsx';
+import { useToast } from '../../context/ToastProvider.jsx';
+import { formatPrice } from '../../utils/formatPrice.js';
 
 /** Turns live events into toasts, honouring the seller's notification settings. */
 export default function LiveNotifications() {
   const toast = useToast();
   const navigate = useNavigate();
-  const { data: settings } = useQuery((signal) => sellerApi.settings(signal), [], { live: ['settings.'] });
+  const { data: settings } = useFetch((signal) => storeService.getSettings(signal), [], { live: ['settings.'] });
 
   useLiveEvent('order.created', (event) => {
     if (settings && !settings.orderNotifications) return;
@@ -17,7 +17,7 @@ export default function LiveNotifications() {
     toast.show({
       tone: 'order',
       title: `New order ${o.orderNumber}`,
-      description: `${o.customerName} · ${o.itemCount} item${o.itemCount === 1 ? '' : 's'} · ${formatCurrency(o.total)}`,
+      description: `${o.customerName} · ${o.itemCount} item${o.itemCount === 1 ? '' : 's'} · ${formatPrice(o.total)}`,
       action: { label: 'View order', onClick: () => navigate(`/orders?order=${o.id}`) },
     });
   });

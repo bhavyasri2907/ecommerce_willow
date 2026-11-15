@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatNumber } from '../../utils/format.js';
+import { formatNumber } from '../../utils/formatNumber.js';
 
 function pageWindow(current, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i);

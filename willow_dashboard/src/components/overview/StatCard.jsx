@@ -1,13 +1,13 @@
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
-import { percentChange } from '../../utils/format.js';
-import { Skeleton } from './States.jsx';
+import { percentChange } from '../../utils/formatNumber.js';
+import { Skeleton } from '../common/Loader.jsx';
 
 /**
  * Headline number with period-over-period change. `invert` flips the colour
  * logic for metrics where going down is good.
  */
-export default function KpiCard({ label, value, current, previous, icon: Icon, spark, comparisonLabel, loading, invert = false }) {
+export default function StatCard({ label, value, current, previous, icon: Icon, spark, comparisonLabel, loading, invert = false }) {
   const change = previous !== undefined ? percentChange(current, previous) : undefined;
   const direction = change === null || change === undefined ? 'none' : change > 0.05 ? 'up' : change < -0.05 ? 'down' : 'flat';
   const good = direction === 'flat' || direction === 'none' ? null : (direction === 'up') !== invert;

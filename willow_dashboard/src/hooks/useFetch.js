@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLiveEvent } from '../live/LiveProvider.jsx';
+import { useLiveEvent } from '../context/LiveProvider.jsx';
 
 /**
  * Fetches data and keeps it fresh.
@@ -8,7 +8,7 @@ import { useLiveEvent } from '../live/LiveProvider.jsx';
  *    keeping the current data on screen (no loading flash).
  * Stale responses from superseded requests are discarded.
  */
-export function useQuery(fetcher, deps = [], { live = [], enabled = true } = {}) {
+export function useFetch(fetcher, deps = [], { live = [], enabled = true } = {}) {
   const [data, setData] = useState(undefined);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(enabled);

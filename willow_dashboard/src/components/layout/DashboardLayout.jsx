@@ -4,7 +4,7 @@ import Sidebar from './Sidebar.jsx';
 import Topbar from './Topbar.jsx';
 import LiveNotifications from './LiveNotifications.jsx';
 
-export default function AppLayout() {
+export default function DashboardLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const location = useLocation();
 

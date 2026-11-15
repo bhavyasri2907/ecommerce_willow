@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { API_BASE_URL } from '../api/client.js';
+import { API_BASE_URL } from '../services/api.js';
 
 const LiveContext = createContext(null);
 const MAX_FEED = 30;
