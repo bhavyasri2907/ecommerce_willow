@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext.jsx';
 import WillowLogo from './WillowLogo.jsx';
+import AnnouncementBar from './AnnouncementBar.jsx';
 import {
   SearchIcon,
   UserIcon,
@@ -12,7 +13,7 @@ import {
 } from '../../assets/icons/NavIcons.jsx';
 
 const NAV_CATEGORIES = [
-  { name: 'NEW IN', path: '/new-in' },
+  { name: 'HOME', path: '/' },
   { name: 'MEN', path: '/men' },
   { name: 'ALL', path: '/all' },
   { name: 'WOMEN', path: '/women' },
@@ -47,6 +48,7 @@ export default function Navbar() {
 
   return (
     <header className="willow-header-container">
+      <AnnouncementBar />
       {/* Main Navbar */}
       <nav className="willow-navbar">
         {/* Mobile Hamburger Button */}
@@ -65,8 +67,9 @@ export default function Navbar() {
             <NavLink
               key={cat.name}
               to={cat.path}
+              end={cat.path === '/'}
               className={({ isActive }) =>
-                `nav-item ${cat.isSale ? 'sale' : ''} ${isActive && cat.path !== '/' ? 'active' : ''}`
+                `nav-item ${cat.isSale ? 'sale' : ''} ${isActive ? 'active' : ''}`
               }
             >
               {cat.name}
@@ -164,6 +167,7 @@ export default function Navbar() {
                 <NavLink
                   key={cat.name}
                   to={cat.path}
+                  end={cat.path === '/'}
                   onClick={() => setMobileMenuOpen(false)}
                   className={({ isActive }) =>
                     `mobile-nav-item ${cat.isSale ? 'sale' : ''} ${isActive ? 'active' : ''}`

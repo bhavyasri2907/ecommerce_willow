@@ -46,6 +46,86 @@ button {
   box-shadow: 0 4px 20px rgba(61, 27, 37, 0.06);
 }
 
+/* Top Announcement Bar (rotating brand quotes) */
+.announcement-bar {
+  background-color: var(--announcement-bg);
+  color: var(--announcement-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 24px;
+  height: 34px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.announcement-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+  animation: announcement-in 0.45s ease;
+}
+
+.announcement-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.announcement-cta {
+  color: #fff;
+  border-bottom: 1px solid rgba(250, 218, 221, 0.5);
+  padding-bottom: 1px;
+  transition: border-color 0.2s ease;
+}
+
+.announcement-content:hover .announcement-cta {
+  border-bottom-color: #fff;
+}
+
+.announcement-plus {
+  opacity: 0.6;
+  font-size: 10px;
+}
+
+.announcement-arrow {
+  background: none;
+  border: none;
+  color: var(--announcement-text);
+  opacity: 0.75;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.announcement-arrow:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+@keyframes announcement-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 600px) {
+  .announcement-bar { padding: 0 8px; font-size: 10.5px; }
+  .announcement-cta, .announcement-plus { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-content { animation: none; }
+}
+
 /* Main Navbar (Tulip Pink Background) */
 .willow-navbar {
   background-color: var(--tulip-pink);
@@ -253,10 +333,10 @@ button {
 .mobile-menu-drawer {
   display: none;
   position: fixed;
-  top: 99px; /* Directly below the navbar */
+  top: 133px; /* Below announcement bar (34px) + navbar (99px) */
   left: 0;
   width: 100%;
-  height: calc(100vh - 99px);
+  height: calc(100vh - 133px);
   background-color: var(--tulip-pink);
   z-index: 45;
   overflow-y: auto;
