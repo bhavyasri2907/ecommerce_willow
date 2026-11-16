@@ -1,0 +1,202 @@
+/* Sign in / sign up: a centred card inside the store layout, banner on top and form below. */
+
+/* Full-bleed soft pink backdrop behind the card, whatever width the page container has. */
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 32px;
+  box-shadow: 0 0 0 100vmax var(--tulip-pink-light);
+  clip-path: inset(0 -100vmax);
+  background: var(--tulip-pink-light);
+}
+
+/* One piece: the banner melts into a pink wash that carries on behind the form. */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #F6C2CD 0, #F6C2CD 180px, #FBE0E6 280px, #FFF6F8 440px);
+  border: 1px solid rgba(140, 45, 66, 0.12);
+  box-shadow: 0 18px 50px rgba(92, 29, 46, 0.16);
+}
+
+.auth-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  /* Fade the bottom edge out so there is no line between picture and form. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+}
+
+.auth-body {
+  position: relative;
+  padding: 6px 32px 28px;
+}
+
+.auth-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #3D1B25;
+  margin: 0 0 6px;
+}
+
+.auth-title small {
+  font-size: 15px;
+  font-weight: 400;
+  color: #7D6B70;
+}
+
+/* The mode you are not on: lighter, and a link to switch. */
+.auth-title a {
+  color: #9A7580;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.auth-title a:hover {
+  color: var(--badge-bg);
+}
+
+.auth-sub {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #6B4A52;
+  margin: 0 0 18px;
+}
+
+.auth-error {
+  background: #FBE4E6;
+  border: 1px solid #E7A9B1;
+  color: #8A1F33;
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  margin: 0 0 18px;
+}
+
+.auth-field {
+  margin-bottom: 14px;
+}
+
+/* Two short fields side by side (sign up: name and phone). */
+.auth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.auth-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3D1B25;
+  margin-bottom: 6px;
+}
+
+.auth-field input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 42px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--nav-text);
+  background: #fff;
+  border: 1px solid rgba(61, 27, 37, 0.22);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.auth-field input:focus {
+  border-color: var(--badge-bg);
+  box-shadow: 0 0 0 3px rgba(140, 45, 66, 0.15);
+}
+
+.auth-field input[aria-invalid='true'] {
+  border-color: #C2334D;
+}
+
+.auth-field__error {
+  color: #B3243F;
+  font-size: 12.5px;
+  margin: 6px 0 0;
+}
+
+.auth-field__hint {
+  color: #7D6B70;
+  font-size: 12.5px;
+  margin: 6px 0 0;
+}
+
+.auth-password {
+  position: relative;
+}
+
+.auth-password input {
+  padding-right: 64px;
+}
+
+.auth-password__toggle {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  height: 42px;
+  padding: 0 10px;
+  background: none;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--badge-bg);
+  cursor: pointer;
+}
+
+.auth-submit {
+  width: 100%;
+  height: 44px;
+  margin-top: 4px;
+  background: var(--badge-bg);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-submit:hover:not(:disabled) {
+  background: #7A2538;
+  box-shadow: 0 6px 16px rgba(140, 45, 66, 0.25);
+}
+
+.auth-submit:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.auth-switch {
+  margin: 16px 0 0;
+  font-size: 13.5px;
+  color: #6B4A52;
+}
+
+.auth-switch a {
+  color: var(--badge-bg);
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .auth-page { padding: 0 0 48px; }
+  .auth-card { border-radius: 0; border: none; box-shadow: none; }
+  .auth-body { padding: 8px 20px 32px; }
+  .auth-row { grid-template-columns: 1fr; gap: 0; }
+}

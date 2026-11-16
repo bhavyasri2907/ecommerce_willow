@@ -1,9 +1,11 @@
 import { NavLink } from 'react-router-dom';
 import { UserIcon } from '../../../assets/icons/NavIcons.jsx';
+import { useAuth } from '../../../context/AuthContext.jsx';
 import { ACCOUNT_NAV } from '../accountNav.js';
 
 /** Profile summary and the account navigation. */
 export default function AccountSidebar({ profile }) {
+  const { logout } = useAuth();
   return (
     <aside className="account-sidebar">
       {/* The column stretches to the page height; the inner block stays in view while scrolling. */}
@@ -26,6 +28,7 @@ export default function AccountSidebar({ profile }) {
                 key={item.key}
                 to={item.to}
                 end
+                onClick={item.signOut ? logout : undefined}
                 className={({ isActive }) => `account-nav__link ${isActive && item.to !== '/' ? 'is-active' : ''}`}
               >
                 <Icon size={20} />

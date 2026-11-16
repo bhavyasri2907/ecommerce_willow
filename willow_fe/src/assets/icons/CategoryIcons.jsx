@@ -1,13 +1,3 @@
-export function DressCategoryIcon({ size = 32, color = 'currentColor' }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 3h8l1 4-3 2v12H10V9L7 7l1-4z" />
-      <path d="M10 9c1.5 1 2.5 1 4 0" />
-      <path d="M7 21h10" />
-    </svg>
-  );
-}
-
 export function TopsCategoryIcon({ size = 32, color = 'currentColor' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -55,21 +45,32 @@ export function AccessoriesCategoryIcon({ size = 32, color = 'currentColor' }) {
   );
 }
 
-export function NewInCategoryIcon({ size = 32, color = 'currentColor' }) {
+export function AllCategoryIcon({ size = 32, color = 'currentColor' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      <rect x="4" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" />
+      <rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" />
     </svg>
   );
 }
 
-export function SaleCategoryIcon({ size = 32, color = 'currentColor' }) {
+export function MenCategoryIcon({ size = 32, color = 'currentColor' }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="9" strokeDasharray="3 2" />
-      <line x1="9" y1="15" x2="15" y2="9" />
-      <circle cx="9.5" cy="9.5" r="1.2" fill={color} />
-      <circle cx="14.5" cy="14.5" r="1.2" fill={color} />
+      <circle cx="12" cy="5.5" r="2.5" />
+      <path d="M7.5 10.5h9l-1 6h-1.5V21h-4v-4.5H8.500l-1-6z" />
+    </svg>
+  );
+}
+
+export function WomenCategoryIcon({ size = 32, color = 'currentColor' }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="5.5" r="2.5" />
+      <path d="M10 10.500h4l3.500 8h-11l3.500-8z" />
+      <path d="M10.500 18.500V21M13.500 18.500V21" />
     </svg>
   );
 }

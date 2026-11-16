@@ -4,21 +4,12 @@ import {
 } from '../../assets/icons/AccountIcons.jsx';
 
 /**
- * Placeholder customer shown in the account area.
- * Replace with the signed-in user once the storefront has authentication.
- */
-export const ACCOUNT_PROFILE = {
-  firstName: 'Bhavya',
-  fullName: 'Bhavya Sri',
-  email: 'bhavya@gmail.com',
-};
-
-/**
  * Single source of truth for the account area: the sidebar, the quick links and the
  * section pages are all built from this list.
  *  - `to`      where the item goes
  *  - `tone`    colour of the quick-link icon tile (see account.css)
  *  - `section` present when the item is a page inside /account; holds that page's copy
+ *  - `signOut` the item ends the session before going to `to`
  */
 export const ACCOUNT_NAV = [
   {
@@ -128,6 +119,7 @@ export const ACCOUNT_NAV = [
     label: 'Logout',
     description: 'Sign out from your account',
     to: '/',
+    signOut: true,
     icon: LogOutIcon,
     tone: 'rose',
   },

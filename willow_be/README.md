@@ -30,7 +30,7 @@ src/main/java/com/willow/
   config/        CORS
   exception/     NotFoundException, GlobalExceptionHandler
   event/         Live events pushed to the seller panel over Server-Sent Events
-  security/      Reserved for authentication (not implemented yet)
+  security/      Password hashing and session tokens for storefront sign-in
   util/          Helpers
 src/main/resources/
   application.properties
@@ -41,6 +41,7 @@ src/main/resources/
 | Area | Endpoints |
 |------|-----------|
 | Storefront | `GET /api/products`, `GET /api/products/{id}`, `GET /api/ai/recommendations/{topId}`, `POST /api/orders` |
+| Accounts | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout` (send `Authorization: Bearer <token>`) |
 | Pairings | `POST /api/recommendations`, `DELETE /api/recommendations?topId=&pantsId=` |
 | Seller: products | `GET/POST /api/seller/products`, `GET/PUT/DELETE /api/seller/products/{id}`, `PATCH .../{id}/status`, `POST .../bulk`, `GET .../summary` |
 | Seller: orders | `GET /api/seller/orders`, `GET .../counts`, `GET .../{id}`, `PATCH .../{id}/status` |

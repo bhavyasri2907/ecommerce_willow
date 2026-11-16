@@ -2,36 +2,23 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService.js';
 import Garment from '../assets/icons/Garment.jsx';
-import ShopByCategory from '../features/products/components/ShopByCategory.jsx';
 import heroBg from '../assets/images/heropage2.png';
 
 export default function Home() {
   const [products, setProducts] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [filterType, setFilterType] = useState(null);
   const [status, setStatus] = useState('loading');
   const navigate = useNavigate();
 
   useEffect(() => {
     setStatus('loading');
     productService
-      .listProducts(filterType)
+      .listProducts()
       .then((data) => {
         setProducts(data);
         setStatus('ready');
       })
       .catch(() => setStatus('error'));
-  }, [filterType]);
-
-  const handleCategorySelect = (catId, type) => {
-    if (activeCategory === catId) {
-      setActiveCategory('all');
-      setFilterType(null);
-    } else {
-      setActiveCategory(catId);
-      setFilterType(type);
-    }
-  };
+  }, []);
 
   return (
     <div>
@@ -97,13 +84,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div id="catalog">
-        {/* Shop By Category Section replacing 'The edit' header */}
-        <ShopByCategory
-          activeCategory={activeCategory}
-          onSelectCategory={handleCategorySelect}
-        />
-
+      <div id="catalog" className="home-catalog">
         {status === 'error' && (
           <p className="state-msg">
             Couldn't reach the Willow API. Make sure the Spring Boot backend is running on

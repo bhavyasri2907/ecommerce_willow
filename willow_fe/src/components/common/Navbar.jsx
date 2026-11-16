@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import WillowLogo from './WillowLogo.jsx';
 import AnnouncementBar from './AnnouncementBar.jsx';
 import {
@@ -33,6 +34,8 @@ function CountBadge({ count }) {
 
 export default function Navbar() {
   const { count, wishlistCount } = useCart();
+  const { user } = useAuth();
+  const accountLabel = user ? 'My Account' : 'Sign in';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -101,9 +104,9 @@ export default function Navbar() {
           <button
             type="button"
             className="icon-action-btn desktop-only"
-            onClick={() => navigate('/account')}
-            title="My Account"
-            aria-label="My Account"
+            onClick={() => navigate(user ? '/account' : '/login')}
+            title={accountLabel}
+            aria-label={accountLabel}
           >
             <UserIcon size={ICON_SIZE} />
           </button>
@@ -179,8 +182,8 @@ export default function Navbar() {
             </div>
 
             <div className="mobile-footer-actions">
-              <Link to="/account" className="mobile-action-link" onClick={() => setMobileMenuOpen(false)}>
-                <UserIcon size={20} /> My Account
+              <Link to={user ? '/account' : '/login'} className="mobile-action-link" onClick={() => setMobileMenuOpen(false)}>
+                <UserIcon size={20} /> {accountLabel}
               </Link>
               <Link to="/wishlist" className="mobile-action-link" onClick={() => setMobileMenuOpen(false)}>
                 <HeartIcon size={20} /> Wishlist{wishlistCount > 0 ? ` (${wishlistCount})` : ''}
