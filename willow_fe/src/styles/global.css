@@ -46,55 +46,7 @@ button {
   box-shadow: 0 4px 20px rgba(61, 27, 37, 0.06);
 }
 
-/* 1. Top Announcement Bar */
-.announcement-bar {
-  background-color: var(--announcement-bg);
-  color: var(--announcement-text);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 24px;
-  font-size: 11.5px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  min-height: 34px;
-}
-
-.announcement-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-align: center;
-}
-
-.announcement-plus {
-  opacity: 0.6;
-  font-size: 10px;
-}
-
-.announcement-text {
-  transition: opacity 0.3s ease;
-}
-
-.announcement-arrow {
-  background: none;
-  border: none;
-  color: var(--announcement-text);
-  opacity: 0.75;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.announcement-arrow:hover {
-  opacity: 1;
-  transform: scale(1.15);
-}
-
-/* 2. Main Navbar (Tulip Pink Background) */
+/* Main Navbar (Tulip Pink Background) */
 .willow-navbar {
   background-color: var(--tulip-pink);
   backdrop-filter: blur(12px);
@@ -301,10 +253,10 @@ button {
 .mobile-menu-drawer {
   display: none;
   position: fixed;
-  top: 106px; /* Below top bar + main nav */
+  top: 99px; /* Directly below the navbar */
   left: 0;
   width: 100%;
-  height: calc(100vh - 106px);
+  height: calc(100vh - 99px);
   background-color: var(--tulip-pink);
   z-index: 45;
   overflow-y: auto;

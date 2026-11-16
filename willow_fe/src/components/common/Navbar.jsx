@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext.jsx';
-import AnnouncementBar from './AnnouncementBar.jsx';
 import WillowLogo from './WillowLogo.jsx';
 import {
   SearchIcon,
@@ -48,9 +47,6 @@ export default function Navbar() {
 
   return (
     <header className="willow-header-container">
-      {/* Top Announcement Bar */}
-      <AnnouncementBar />
-
       {/* Main Navbar */}
       <nav className="willow-navbar">
         {/* Mobile Hamburger Button */}
