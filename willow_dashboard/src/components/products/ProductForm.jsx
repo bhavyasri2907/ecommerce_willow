@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ImageIcon, Plus, Save, X } from 'lucide-react';
+import { ArrowLeft, Plus, Save, X } from 'lucide-react';
 import { productService } from '../../services/productService.js';
 import { useCategories } from '../../hooks/useCategories.js';
 import { useToast } from '../../context/ToastProvider.jsx';
@@ -11,15 +11,20 @@ import { Field, Input, Select, Textarea } from '../common/Input.jsx';
 import ProductThumb from '../common/ProductThumb.jsx';
 import StockBadge from '../inventory/StockBadge.jsx';
 import ProductStatusBadge from './ProductStatusBadge.jsx';
-import { SIZE_PRESETS, STYLES, SWATCHES } from '../../constants/productOptions.js';
+import ImageUploader from './ImageUploader.jsx';
+import { GENDERS, SIZE_PRESETS, STYLES, SWATCHES } from '../../constants/productOptions.js';
+import { STOREFRONT_URL } from '../../constants/config.js';
 import { formatPrice } from '../../utils/formatPrice.js';
 import { formatNumber } from '../../utils/formatNumber.js';
 import { formatDateTime } from '../../utils/formatDate.js';
-import { isHttpUrl, validateProduct } from '../../utils/validators.js';
+import { validateProduct } from '../../utils/validators.js';
 
 const EMPTY = {
   name: '',
   type: 'TOP',
+  gender: 'WOMEN',
+  brand: '',
+  material: '',
   status: 'LIVE',
   sku: '',
   color: '',
@@ -29,7 +34,7 @@ const EMPTY = {
   originalPrice: '',
   stock: '0',
   sizes: [],
-  imageUrl: '',
+  images: [],
   description: '',
 };
 
@@ -37,6 +42,9 @@ function fromProduct(p) {
   return {
     name: p.name,
     type: p.type,
+    gender: p.gender ?? 'UNISEX',
+    brand: p.brand ?? '',
+    material: p.material ?? '',
     status: p.status,
     sku: p.sku ?? '',
     color: p.color ?? '',
@@ -46,7 +54,7 @@ function fromProduct(p) {
     originalPrice: p.originalPrice ? String(p.originalPrice) : '',
     stock: String(p.stock ?? 0),
     sizes: p.sizes ?? [],
-    imageUrl: p.imageUrl ?? '',
+    images: p.images?.length ? p.images : p.imageUrl ? [p.imageUrl] : [],
     description: p.description ?? '',
   };
 }
@@ -106,12 +114,22 @@ export default function ProductForm({ product }) {
       originalPrice: form.originalPrice ? Number(form.originalPrice) : null,
       stock: Number(form.stock),
       sku: form.sku.trim() || null,
-      imageUrl: form.imageUrl.trim() || null,
+      brand: form.brand.trim() || null,
+      material: form.material.trim() || null,
     };
     setSaving(true);
     try {
       const saved = isEdit ? await productService.updateProduct(product.id, body) : await productService.createProduct(body);
-      toast.success(isEdit ? 'Product updated' : 'Product created', `${saved.name} · ${saved.sku}`);
+      toast.show({
+        tone: 'success',
+        title: isEdit ? 'Product updated' : saved.status === 'LIVE' ? 'Product is live on your store' : 'Product saved as draft',
+        description: `${saved.name} · ${saved.sku}`,
+        // A live product can be opened on the storefront straight away.
+        action: saved.status === 'LIVE'
+          ? { label: 'View on storefront', onClick: () => window.open(`${STOREFRONT_URL}/product/${saved.id}`, '_blank', 'noopener') }
+          : undefined,
+        duration: 8000,
+      });
       navigate(isEdit ? '/products' : `/products?type=${saved.type}`);
     } catch (err) {
       setErrors(err.fields ?? {});
@@ -125,7 +143,7 @@ export default function ProductForm({ product }) {
     ...form,
     price: Number(form.price || 0),
     stock: Number(form.stock || 0),
-    imageUrl: isHttpUrl(form.imageUrl) ? form.imageUrl : null,
+    imageUrl: form.images[0] ?? null,
   };
   const previewStock = preview.stock <= 0 ? 'OUT_OF_STOCK' : preview.stock <= 10 ? 'LOW_STOCK' : 'IN_STOCK';
 
@@ -152,6 +170,11 @@ export default function ProductForm({ product }) {
       <div className="form-layout">
         <div className="form-layout__main">
           <Card>
+            <CardHeader title="Photos" subtitle="Shown on your storefront. Add a few angles." />
+            <ImageUploader images={form.images} onChange={set('images')} error={errors.images} />
+          </Card>
+
+          <Card>
             <CardHeader title="Basic information" subtitle="What shoppers see first." />
             <div className="form-grid">
               <Field label="Product name" required error={errors.name} className="span-2">
@@ -162,8 +185,17 @@ export default function ProductForm({ product }) {
                   <Select id={fid} value={form.type} onChange={(e) => { set('type')(e.target.value); set('sizes')([]); }} options={categories} />
                 )}
               </Field>
+              <Field label="For" required error={errors.gender} hint="Decides whether it shows under Men, Women or both.">
+                {(fid) => <Select id={fid} value={form.gender} onChange={(e) => set('gender')(e.target.value)} options={GENDERS} />}
+              </Field>
               <Field label="Style" error={errors.style}>
                 {(fid) => <Select id={fid} value={form.style} onChange={(e) => set('style')(e.target.value)} placeholder="Not set" options={STYLES.map((s) => ({ value: s, label: s }))} />}
+              </Field>
+              <Field label="Brand" error={errors.brand} hint="Leave blank to show your store name.">
+                {(fid) => <Input id={fid} value={form.brand} onChange={(e) => set('brand')(e.target.value)} placeholder="Your store name" maxLength={80} />}
+              </Field>
+              <Field label="Material" error={errors.material}>
+                {(fid) => <Input id={fid} value={form.material} onChange={(e) => set('material')(e.target.value)} placeholder="e.g. 100% cotton" maxLength={120} />}
               </Field>
               <Field label="Description" error={errors.description} hint={`${form.description.length}/1000`} className="span-2">
                 {(fid) => (
@@ -224,7 +256,7 @@ export default function ProductForm({ product }) {
           </Card>
 
           <Card>
-            <CardHeader title="Appearance" subtitle="Used for the product image and the colour swatch." />
+            <CardHeader title="Colour" subtitle="Shown beside the product, and used as its tile when there is no photo." />
             <div className="form-grid">
               <Field label="Colour name" error={errors.color}>
                 {(fid) => <Input id={fid} value={form.color} onChange={(e) => set('color')(e.target.value)} placeholder="e.g. Ivory" maxLength={60} />}
@@ -245,9 +277,6 @@ export default function ProductForm({ product }) {
                     ))}
                   </div>
                 )}
-              </Field>
-              <Field label="Image URL" error={errors.imageUrl} hint="Paste a link to a square product photo." className="span-2">
-                {(fid) => <Input id={fid} type="url" value={form.imageUrl} onChange={(e) => set('imageUrl')(e.target.value)} placeholder="https://…" prefix={<ImageIcon size={15} />} />}
               </Field>
             </div>
           </Card>
@@ -280,7 +309,10 @@ export default function ProductForm({ product }) {
                 <ProductThumb product={preview} size={180} />
               </div>
               <div className="preview__body">
-                <div className="preview__meta">{labelOf(form.type)}{form.style ? ` · ${form.style}` : ''}</div>
+                <div className="preview__meta">
+                  {GENDERS.find((g) => g.value === form.gender)?.label.split(' ')[0]} · {labelOf(form.type)}
+                  {form.style ? ` · ${form.style}` : ''}
+                </div>
                 <div className="preview__name">{form.name || 'Product name'}</div>
                 <div className="preview__price">
                   {formatPrice(preview.price)}

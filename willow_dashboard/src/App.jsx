@@ -1,10 +1,13 @@
 import { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import DashboardLayout from './components/layout/DashboardLayout.jsx';
+import RequireAuth from './components/layout/RequireAuth.jsx';
+import { LiveProvider } from './context/LiveProvider.jsx';
 import Loader from './components/common/Loader.jsx';
 import './App.css';
 
 // Each page is its own chunk; the shell (sidebar, topbar, live connection) loads once.
+const Login = lazy(() => import('./pages/Login.jsx'));
 const Overview = lazy(() => import('./pages/Overview.jsx'));
 const Products = lazy(() => import('./pages/Products.jsx'));
 const AddProduct = lazy(() => import('./pages/AddProduct.jsx'));
@@ -23,10 +26,27 @@ const page = (Component) => (
   </Suspense>
 );
 
+/** The panel itself: only for a signed-in seller, with the live connection opened once they are in. */
+const panel = (
+  <RequireAuth>
+    <LiveProvider>
+      <DashboardLayout />
+    </LiveProvider>
+  </RequireAuth>
+);
+
+const authPage = (mode) => (
+  <Suspense fallback={<Loader />}>
+    <Login key={mode} mode={mode} />
+  </Suspense>
+);
+
 export default function App() {
   return (
     <Routes>
-      <Route element={<DashboardLayout />}>
+      <Route path="login" element={authPage('login')} />
+      <Route path="signup" element={authPage('signup')} />
+      <Route element={panel}>
         <Route index element={page(Overview)} />
         <Route path="products" element={page(Products)} />
         <Route path="products/new" element={page(AddProduct)} />

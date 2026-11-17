@@ -1,5 +1,6 @@
 package com.willow.dto.request;
 
+import com.willow.entity.ProductGender;
 import com.willow.entity.ProductStatus;
 import com.willow.entity.ProductType;
 import jakarta.validation.constraints.*;
@@ -17,6 +18,15 @@ public record ProductRequest(
         ProductType type,
 
         ProductStatus status,
+
+        /** Who it is for; UNISEX when omitted. */
+        ProductGender gender,
+
+        @Size(max = 80, message = "Brand must be at most 80 characters")
+        String brand,
+
+        @Size(max = 120, message = "Material must be at most 120 characters")
+        String material,
 
         @Size(max = 40, message = "SKU must be at most 40 characters")
         @Pattern(regexp = "^$|^[A-Za-z0-9-]+$", message = "SKU may only contain letters, numbers and dashes")
@@ -46,6 +56,11 @@ public record ProductRequest(
         @Size(max = 12, message = "At most 12 sizes")
         List<@NotBlank @Size(max = 10) String> sizes,
 
+        /** Photos in display order; the first is the cover. */
+        @Size(max = 8, message = "At most 8 photos")
+        List<@NotBlank @Size(max = 500) @Pattern(regexp = "^https?://.+", message = "Each photo must be an http(s) URL") String> images,
+
+        /** Older clients send a single image instead of {@code images}; still accepted. */
         @Size(max = 500)
         @Pattern(regexp = "^$|^https?://.+", message = "Image must be an http(s) URL")
         String imageUrl,

@@ -760,9 +760,76 @@ main {
 }
 
 .card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
   cursor: pointer;
 }
 
+/* A product photo, or a coloured tile with a drawing when there is no photo. */
+.product-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F3ECEE;
+  overflow: hidden;
+}
+
+.product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.card-media {
+  position: relative;
+  aspect-ratio: 3/4;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.card-media .product-image {
+  transition: transform 0.45s ease;
+}
+
+.card:hover .card-media .product-image {
+  transform: scale(1.04);
+}
+
+.card-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--badge-bg);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.card-tag--muted {
+  background: rgba(44, 24, 30, 0.75);
+}
+
+.card.is-sold-out .product-image {
+  opacity: 0.6;
+}
+
+.card-brand {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--badge-bg);
+  margin-bottom: 2px;
+}
+
+/* Older tiles (seller studio) still use the plain swatch. */
 .swatch {
   aspect-ratio: 3/4;
   border-radius: 6px;
@@ -770,11 +837,6 @@ main {
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
-  transition: transform 0.35s ease;
-}
-
-.card:hover .swatch {
-  transform: translateY(-4px);
 }
 
 .card .name {
@@ -808,12 +870,182 @@ main {
   padding-top: 50px;
 }
 
-.pd-swatch {
+.pd-gallery {
+  min-width: 0;
+}
+
+.pd-photo {
   aspect-ratio: 3/4;
+  height: auto;
+  border-radius: 8px;
+}
+
+.pd-thumbs {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.pd-thumb {
+  width: 68px;
+  aspect-ratio: 3/4;
+  padding: 0;
+  border: 1.5px solid transparent;
   border-radius: 6px;
+  overflow: hidden;
+  background: #F3ECEE;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, border-color 0.15s ease;
+}
+
+.pd-thumb:hover,
+.pd-thumb.is-on {
+  opacity: 1;
+}
+
+.pd-thumb.is-on {
+  border-color: var(--badge-bg);
+}
+
+.pd-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pd-brand {
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--badge-bg);
+  margin-bottom: 6px;
+}
+
+.pd-price {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pd-price .original-price {
+  font-size: 15px;
+}
+
+.pd-off {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1C7C54;
+}
+
+.pd-stock {
+  font-size: 13px;
+  margin: 6px 0 0;
+  color: #1C7C54;
+}
+
+.pd-stock--low {
+  color: #A35F00;
+}
+
+.pd-stock--out {
+  color: #B3243F;
+}
+
+.pd-sizes {
+  margin-top: 22px;
+}
+
+.pd-label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.pd-size-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pd-size {
+  min-width: 46px;
+  height: 40px;
+  padding: 0 12px;
+  background: #fff;
+  border: 1px solid rgba(44, 24, 30, 0.2);
+  border-radius: 999px;
+  font-size: 13.5px;
+  color: var(--nav-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.pd-size:hover {
+  border-color: var(--badge-bg);
+}
+
+.pd-size.is-on {
+  background: var(--nav-text);
+  border-color: var(--nav-text);
+  color: #fff;
+}
+
+.pd-size-error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #B3243F;
+}
+
+.pd-facts {
+  margin: 22px 0 0;
+  max-width: 420px;
+  border-top: 1px solid var(--line);
+}
+
+.pd-facts > div {
+  display: flex;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+}
+
+.pd-facts dt {
+  width: 90px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.pd-facts dd {
+  margin: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+}
+
+.pd-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(44, 24, 30, 0.2);
+}
+
+.add-btn:disabled {
+  background: #B9AEB1;
+  cursor: not-allowed;
+}
+
+@media (max-width: 760px) {
+  .pd {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-top: 24px;
+  }
 }
 
 .back-link {

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AlertTriangle, Bell, Menu as MenuIcon, Search, ShoppingBag } from 'lucide-react';
+import { AlertTriangle, Bell, LogOut, Menu as MenuIcon, Search, ShoppingBag } from 'lucide-react';
 import { storeService } from '../../services/storeService.js';
 import { useFetch } from '../../hooks/useFetch.js';
 import { useLive } from '../../context/LiveProvider.jsx';
+import { useAuth } from '../../context/AuthProvider.jsx';
 import { formatPrice } from '../../utils/formatPrice.js';
 import { timeAgo } from '../../utils/formatDate.js';
 import { navItemFor } from '../../constants/navItems.js';
@@ -68,6 +69,56 @@ function NotificationsMenu() {
   );
 }
 
+/** The store and seller in the corner; opens a small menu with sign out. */
+function AccountMenu({ store }) {
+  const { seller, logout } = useAuth();
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const close = (e) => !ref.current?.contains(e.target) && setOpen(false);
+    const onKey = (e) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', close);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', close);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const storeName = store?.storeName ?? seller?.storeName ?? 'Willow';
+  const initials = storeName.slice(0, 1).toUpperCase();
+
+  return (
+    <div className="menu account-menu" ref={ref}>
+      <button className="account" aria-haspopup="menu" aria-expanded={open} aria-label="Account" onClick={() => setOpen((o) => !o)}>
+        {store?.logoUrl ? (
+          <img src={store.logoUrl} alt="" className="account__avatar" />
+        ) : (
+          <span className="account__avatar account__avatar--initials" aria-hidden>{initials}</span>
+        )}
+        <span className="account__text">
+          <strong>{storeName}</strong>
+          <span>{seller?.fullName ?? 'Seller'}</span>
+        </span>
+      </button>
+      {open && (
+        <div className="menu__list" role="menu">
+          <div className="account-menu__who">
+            <strong>{seller?.fullName}</strong>
+            <span>{seller?.email}</span>
+          </div>
+          <button role="menuitem" className="menu__item menu__item--danger" onClick={logout}>
+            <LogOut size={15} aria-hidden />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Topbar({ onMenu }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -100,8 +151,6 @@ export default function Topbar({ onMenu }) {
     inputRef.current?.blur();
   }
 
-  const initials = (store?.storeName || 'W').slice(0, 1).toUpperCase();
-
   return (
     <header className="topbar">
       <button className="icon-btn topbar__menu" onClick={onMenu} aria-label="Open navigation">
@@ -126,17 +175,7 @@ export default function Topbar({ onMenu }) {
 
       <NotificationsMenu />
 
-      <div className="account" title={store?.storeName}>
-        {store?.logoUrl ? (
-          <img src={store.logoUrl} alt="" className="account__avatar" />
-        ) : (
-          <span className="account__avatar account__avatar--initials" aria-hidden>{initials}</span>
-        )}
-        <span className="account__text">
-          <strong>{store?.storeName ?? 'Willow'}</strong>
-          <span>{store?.ownerName ?? 'Seller'}</span>
-        </span>
-      </div>
+      <AccountMenu store={store} />
     </header>
   );
 }

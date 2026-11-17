@@ -13,6 +13,5 @@ export function validateProduct(form) {
     errors.stock = 'Stock must be a whole number, 0 or more';
   }
   if (form.sku && !isSku(form.sku)) errors.sku = 'Only letters, numbers and dashes';
-  if (form.imageUrl && !isHttpUrl(form.imageUrl)) errors.imageUrl = 'Must start with http:// or https://';
   return errors;
 }

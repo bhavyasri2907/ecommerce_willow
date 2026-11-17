@@ -4,6 +4,7 @@ willow_fe/dist/
 
 # Backend
 willow_be/target/
+willow_be/uploads/
 
 # IntelliJ
 .idea/

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService.js';
-import Garment from '../assets/icons/Garment.jsx';
+import ProductCard from '../features/products/components/ProductCard.jsx';
 import heroBg from '../assets/images/heropage2.png';
 
 export default function Home() {
@@ -14,7 +14,8 @@ export default function Home() {
     productService
       .listProducts()
       .then((data) => {
-        setProducts(data);
+        // Newest arrivals first.
+        setProducts([...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
         setStatus('ready');
       })
       .catch(() => setStatus('error'));
@@ -86,24 +87,21 @@ export default function Home() {
 
       <div id="catalog" className="home-catalog">
         {status === 'error' && (
-          <p className="state-msg">
-            Couldn't reach the Willow API. Make sure the Spring Boot backend is running on
-            http://localhost:8080.
-          </p>
+          <p className="state-msg">Couldn't load the collection. Please check your connection and try again.</p>
         )}
         {status === 'loading' && <p className="state-msg">Loading Willow collection…</p>}
 
-        {status === 'ready' && (
+        {status === 'ready' && products.length === 0 && (
+          <div className="empty-category-box">
+            <h3>The collection is on its way.</h3>
+            <p>New pieces will appear here as soon as they are listed.</p>
+          </div>
+        )}
+
+        {status === 'ready' && products.length > 0 && (
           <div className="grid">
             {products.map((p) => (
-              <div className="card" key={p.id} onClick={() => navigate(`/product/${p.id}`)}>
-                <div className="swatch" style={{ background: `${p.hex}22` }}>
-                  <Garment type={p.type} hex={p.hex} />
-                </div>
-                <div className="name">{p.name}</div>
-                <div className="meta">{p.style} · {p.color}</div>
-                <div className="price">₹{Number(p.price).toLocaleString('en-IN')}</div>
-              </div>
+              <ProductCard key={p.id} product={p} />
             ))}
           </div>
         )}

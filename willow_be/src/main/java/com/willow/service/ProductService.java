@@ -31,7 +31,9 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductDto findById(Long id) {
+        // Drafts and archived products are not on sale, so shoppers cannot open them either.
         Product p = productRepository.findById(id)
+                .filter(product -> product.getStatus() == ProductStatus.LIVE)
                 .orElseThrow(() -> new NotFoundException("product", id));
         return ProductDto.from(p);
     }

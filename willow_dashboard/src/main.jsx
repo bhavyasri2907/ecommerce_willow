@@ -3,17 +3,17 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import './styles/index.css';
 import App from './App.jsx';
-import { LiveProvider } from './context/LiveProvider.jsx';
+import { AuthProvider } from './context/AuthProvider.jsx';
 import { ToastProvider } from './context/ToastProvider.jsx';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <LiveProvider>
+      <AuthProvider>
         <ToastProvider>
           <App />
         </ToastProvider>
-      </LiveProvider>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

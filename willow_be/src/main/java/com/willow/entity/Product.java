@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "products", indexes = {
@@ -53,8 +55,28 @@ public class Product {
     @Column(length = 200)
     private String sizes;
 
+    /** The cover photo: always the first entry of {@link #images}, kept here so lists need no join. */
     @Column(length = 500)
     private String imageUrl;
+
+    /** All photos, in the order the seller arranged them. */
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "product_images", joinColumns = @JoinColumn(name = "product_id"))
+    @OrderColumn(name = "position")
+    @Column(name = "url", nullable = false, length = 500)
+    private List<String> images = new ArrayList<>();
+
+    /** Who the product is for; decides which storefront pages list it. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 10)
+    private ProductGender gender = ProductGender.UNISEX;
+
+    /** Optional; the storefront shows the store's own name when this is empty. */
+    @Column(length = 80)
+    private String brand;
+
+    @Column(length = 120)
+    private String material;
 
     @Column(length = 1000)
     private String description;
@@ -113,7 +135,24 @@ public class Product {
     public void setSizes(String sizes) { this.sizes = sizes; }
 
     public String getImageUrl() { return imageUrl; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public List<String> getImages() { return images; }
+
+    /** Replaces the photos; the first one becomes the cover. */
+    public void setImages(List<String> urls) {
+        images.clear();
+        images.addAll(urls);
+        imageUrl = images.isEmpty() ? null : images.get(0);
+    }
+
+    public ProductGender getGender() { return gender; }
+    public void setGender(ProductGender gender) { this.gender = gender; }
+
+    public String getBrand() { return brand; }
+    public void setBrand(String brand) { this.brand = brand; }
+
+    public String getMaterial() { return material; }
+    public void setMaterial(String material) { this.material = material; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

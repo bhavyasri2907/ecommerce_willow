@@ -27,7 +27,8 @@ export function CartProvider({ children }) {
     }
   ]);
 
-  function addToCart(product) {
+  /** `size` is the one picked on the product page; without it the bag keeps or defaults the size. */
+  function addToCart(product, size) {
     setItems((prev) => {
       const existing = prev[product.id];
       return {
@@ -35,7 +36,7 @@ export function CartProvider({ children }) {
         [product.id]: {
           product,
           qty: (existing?.qty || 0) + 1,
-          size: existing?.size ?? product.sizes?.[0] ?? null,
+          size: size ?? existing?.size ?? product.sizes?.[0] ?? null,
         },
       };
     });

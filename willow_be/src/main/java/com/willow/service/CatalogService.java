@@ -224,10 +224,22 @@ public class CatalogService {
         p.setStyle(blankToNull(req.style()));
         p.setPrice(req.price());
         p.setOriginalPrice(req.originalPrice() != null && req.originalPrice().signum() > 0 ? req.originalPrice() : null);
-        p.setImageUrl(blankToNull(req.imageUrl()));
+        p.setGender(req.gender() == null ? ProductGender.UNISEX : req.gender());
+        p.setBrand(blankToNull(req.brand()));
+        p.setMaterial(blankToNull(req.material()));
+        p.setImages(photosOf(req));
         p.setDescription(blankToNull(req.description()));
         p.setSizes(req.sizes() == null || req.sizes().isEmpty() ? null
                 : String.join(",", req.sizes().stream().map(String::trim).distinct().toList()));
+    }
+
+    /** The request's photos in order, without blanks or repeats. Falls back to the single imageUrl. */
+    private static List<String> photosOf(ProductRequest req) {
+        if (req.images() != null) {
+            return req.images().stream().map(String::trim).filter(s -> !s.isEmpty()).distinct().toList();
+        }
+        String single = blankToNull(req.imageUrl());
+        return single == null ? List.of() : List.of(single);
     }
 
     private String resolveSku(String requested, ProductType type, Long existingId) {

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { API_BASE_URL } from '../services/api.js';
+import { API_BASE_URL, tokenStore } from '../services/api.js';
 
 const LiveContext = createContext(null);
 const MAX_FEED = 30;
@@ -8,6 +8,8 @@ const MAX_FEED = 30;
  * Holds one Server-Sent Events connection to willow_be for the whole app.
  * Components subscribe by event-type prefix (e.g. "order." matches order.created
  * and order.updated). EventSource reconnects on its own after network drops.
+ * Mounted only while a seller is signed in; EventSource cannot send headers, so the
+ * session token goes in the URL.
  */
 export function LiveProvider({ children }) {
   const [status, setStatus] = useState('connecting'); // connecting | live | offline
@@ -16,7 +18,7 @@ export function LiveProvider({ children }) {
   const listeners = useRef(new Set());
 
   useEffect(() => {
-    const source = new EventSource(`${API_BASE_URL}/seller/events`);
+    const source = new EventSource(`${API_BASE_URL}/seller/events?token=${encodeURIComponent(tokenStore.get() ?? '')}`);
     source.onopen = () => setStatus('live');
     source.onerror = () => setStatus(source.readyState === EventSource.CLOSED ? 'offline' : 'connecting');
     source.onmessage = (message) => {

@@ -15,6 +15,9 @@ npm run dev
 
 Open http://localhost:5174. The storefront (`willow_fe`) keeps running on 5173.
 
+The panel needs a signed-in seller. The first visit shows **Set up your store** (store name, your name,
+email, password), which creates the store's one seller account; after that it shows **Sign in**.
+
 To point at a different API, copy `.env.example` to `.env` and set `VITE_API_URL`.
 
 `npm run lint` checks the code with ESLint; `npm run build` makes a production build in `dist/`.
@@ -30,29 +33,32 @@ willow_dashboard/
 │   ├── App.css             app shell styles: page grid, sidebar, topbar
 │   ├── pages/              one file per route, kept thin: fetch data, compose components
 │   │                       Overview, Products, AddProduct, EditProduct, CuratedPicks,
-│   │                       Inventory, Orders, Analytics, StoreProfile, Settings, NotFound
+│   │                       Inventory, Orders, Analytics, StoreProfile, Settings, NotFound,
+│   │                       Login (sign-in and store set-up)
 │   ├── components/
-│   │   ├── layout/         DashboardLayout, Sidebar, Topbar, LiveNotifications
+│   │   ├── layout/         DashboardLayout, Sidebar, Topbar, LiveNotifications, RequireAuth
 │   │   ├── overview/       StatCard, RevenueCard, NeedsAttention, RecentOrders,
 │   │   │                   StockAlerts, TopProducts
-│   │   ├── products/       ProductTable, ProductForm, ProductFilters, ProductStatusBadge
+│   │   ├── products/       ProductTable, ProductForm, ImageUploader, ProductFilters,
+│   │   │                   ProductStatusBadge
 │   │   ├── orders/         OrderTable, OrderDetailsDrawer, OrderTimeline, OrderStatusBadge
 │   │   ├── inventory/      StockAdjustModal, StockMeter, StockBadge
 │   │   ├── charts/         TimeSeriesChart (revenue, orders), BarList
 │   │   └── common/         Button, Card, Input (form controls), Modal (Modal/Drawer/Confirm),
 │   │                       Loader (skeletons), ErrorState, EmptyState, Badge, Tabs,
 │   │                       Pagination, Menu, PageHeader, ProductThumb
-│   ├── services/           api.js (fetch wrapper, ApiError) + one service per backend area:
-│   │                       productService, orderService, inventoryService,
+│   ├── services/           api.js (fetch wrapper, session token, ApiError) + one service per
+│   │                       backend area: authService, productService, orderService, inventoryService,
 │   │                       dashboardService, curationService, storeService
-│   ├── context/            LiveProvider (one shared SSE connection), ToastProvider
+│   ├── context/            AuthProvider (signed-in seller), LiveProvider (one shared SSE
+│   │                       connection), ToastProvider
 │   ├── hooks/              useFetch (fetch + silent refetch on live events),
 │   │                       useDebounce, useCategories
 │   ├── utils/              formatPrice, formatDate, formatNumber, validators
 │   ├── constants/          navItems, orderStatus, productStatus, productOptions,
 │   │                       stockStatus, config
 │   ├── assets/             images/ (logo), icons/
-│   └── styles/             index.css (global), variables.css (design tokens)
+│   └── styles/             index.css (global), variables.css (design tokens), auth.css
 ├── .env.example            copy to .env
 ├── eslint.config.js
 └── vite.config.js

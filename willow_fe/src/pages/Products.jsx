@@ -1,35 +1,23 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { productService } from '../services/productService.js';
-import Garment from '../assets/icons/Garment.jsx';
-import {
-  CATEGORY_FILTERS,
-  TYPE_ICONS,
-  itemsForCategory,
-  needsApi,
-} from '../features/products/categoryFilters.js';
+import ProductCard from '../features/products/components/ProductCard.jsx';
+import { CATEGORY_FILTERS, itemsForCategory } from '../features/products/categoryFilters.js';
 
+/** A collection page (Men, Women, Bags, Sale, ...): icon filters, sort and the product grid. */
 export default function Products({ categoryKey, title }) {
   const [products, setProducts] = useState([]);
   const [status, setStatus] = useState('loading');
   const [activeFilter, setActiveFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('featured');
-  const navigate = useNavigate();
+  const [sortBy, setSortBy] = useState('newest');
 
   const filters = CATEGORY_FILTERS[categoryKey] || [];
 
   useEffect(() => {
     let cancelled = false;
     setActiveFilter('all');
+    setStatus('loading');
     window.scrollTo(0, 0);
 
-    if (!needsApi(categoryKey)) {
-      setProducts(itemsForCategory(categoryKey, []));
-      setStatus('ready');
-      return undefined;
-    }
-
-    setStatus('loading');
     productService
       .listProducts()
       .then((data) => {
@@ -45,11 +33,10 @@ export default function Products({ categoryKey, title }) {
   }, [categoryKey]);
 
   const matches = filters.find((f) => f.id === activeFilter)?.match || (() => true);
-  const visibleProducts = products.filter(matches).sort((a, b) => {
-    if (sortBy === 'price-low') return a.price - b.price;
-    if (sortBy === 'price-high') return b.price - a.price;
-    return a.id - b.id;
-  });
+  const visibleProducts = products.filter(matches);
+  // "Newest" keeps the order the list arrives in; the price sorts reorder a copy.
+  if (sortBy === 'price-low') visibleProducts.sort((a, b) => a.price - b.price);
+  if (sortBy === 'price-high') visibleProducts.sort((a, b) => b.price - a.price);
 
   return (
     <div className="category-page-container">
@@ -90,7 +77,7 @@ export default function Products({ categoryKey, title }) {
             onChange={(e) => setSortBy(e.target.value)}
             className="sort-select"
           >
-            <option value="featured">Featured</option>
+            <option value="newest">Newest</option>
             <option value="price-low">Price: Low to High</option>
             <option value="price-high">Price: High to Low</option>
           </select>
@@ -99,7 +86,7 @@ export default function Products({ categoryKey, title }) {
 
       {status === 'error' && (
         <p className="state-msg">
-          Couldn't load collection. Please ensure the Willow API is running.
+          Couldn't load this collection. Please check your connection and try again.
         </p>
       )}
 
@@ -108,7 +95,11 @@ export default function Products({ categoryKey, title }) {
       {status === 'ready' && visibleProducts.length === 0 && (
         <div className="empty-category-box">
           <h3>Nothing here yet.</h3>
-          <p>Try another filter or browse the full collection.</p>
+          <p>
+            {activeFilter === 'all'
+              ? 'New pieces are added often — check back soon.'
+              : 'Try another filter or browse the full collection.'}
+          </p>
           {activeFilter !== 'all' && (
             <button className="reset-filter-btn" onClick={() => setActiveFilter('all')}>
               Show all
@@ -119,26 +110,9 @@ export default function Products({ categoryKey, title }) {
 
       {status === 'ready' && visibleProducts.length > 0 && (
         <div className="grid">
-          {visibleProducts.map((p) => {
-            const TypeIcon = TYPE_ICONS[p.type];
-            return (
-              <div className="card" key={p.id} onClick={() => navigate(`/product/${p.id}`)}>
-                <div className="swatch" style={{ background: `${p.hex}22` }}>
-                  {TypeIcon ? <TypeIcon size={96} color={p.hex} /> : <Garment type={p.type} hex={p.hex} />}
-                </div>
-                <div className="name">{p.name}</div>
-                <div className="meta">
-                  {p.style} · {p.color}
-                </div>
-                <div className="price-row">
-                  <span className="price">₹{Number(p.price).toLocaleString('en-IN')}</span>
-                  {p.originalPrice && (
-                    <span className="original-price">₹{Number(p.originalPrice).toLocaleString('en-IN')}</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+          {visibleProducts.map((p) => (
+            <ProductCard key={p.id} product={p} />
+          ))}
         </div>
       )}
     </div>

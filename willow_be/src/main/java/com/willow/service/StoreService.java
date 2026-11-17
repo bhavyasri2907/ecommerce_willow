@@ -1,6 +1,7 @@
 package com.willow.service;
 
 import com.willow.dto.response.SellerSettingsDto;
+import com.willow.dto.response.StoreInfoDto;
 import com.willow.dto.response.StorePoliciesDto;
 import com.willow.dto.response.StoreProfileDto;
 import com.willow.event.LiveEvent;
@@ -55,6 +56,17 @@ public class StoreService {
         return dto;
     }
 
+    /** Called when the seller signs up: names the store and records its owner's contact details. */
+    @Transactional
+    public void setUpStore(String storeName, String ownerName, String email, String phone) {
+        StoreProfile s = profileEntity();
+        s.setStoreName(storeName);
+        s.setOwnerName(ownerName);
+        s.setContactEmail(email);
+        s.setContactPhone(phone);
+        events.publish(LiveEvent.STORE_UPDATED, StoreProfileDto.from(profileRepository.saveAndFlush(s)));
+    }
+
     @Transactional
     public SellerSettingsDto getSettings() {
         return SellerSettingsDto.from(settings());
@@ -74,6 +86,12 @@ public class StoreService {
         SellerSettingsDto dto = SellerSettingsDto.from(settingsRepository.saveAndFlush(s));
         events.publish(LiveEvent.SETTINGS_UPDATED, dto);
         return dto;
+    }
+
+    /** The store's name, tagline and logo, as shown to shoppers. */
+    @Transactional
+    public StoreInfoDto getPublicInfo() {
+        return StoreInfoDto.from(profileEntity());
     }
 
     /** Shipping charges and return window, as shown to shoppers. */
