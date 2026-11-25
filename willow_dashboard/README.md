@@ -44,6 +44,7 @@ willow_dashboard/
 │   │   │                   ProductStatusBadge
 │   │   ├── orders/         OrderTable, OrderDetailsDrawer, OrderTimeline, OrderStatusBadge
 │   │   ├── inventory/      StockAdjustModal, StockMeter, StockBadge
+│   │   ├── curation/       PickLinkInput (paste a Willow product link), PickList
 │   │   ├── charts/         TimeSeriesChart (revenue, orders), BarList
 │   │   └── common/         Button, Card, Input (form controls), Modal (Modal/Drawer/Confirm),
 │   │                       Loader (skeletons), ErrorState, EmptyState, Badge, Tabs,

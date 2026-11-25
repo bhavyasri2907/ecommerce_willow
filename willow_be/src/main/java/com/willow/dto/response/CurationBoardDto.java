@@ -3,11 +3,11 @@ package com.willow.dto.response;
 import java.util.List;
 
 /**
- * Everything the "Seller's Curated Picks" screen needs: each top with the matches
- * the seller has approved (ranked by the AI assistant), and every product that
- * may be paired with a top.
+ * Everything the dashboard's "Seller's Curated Picks" screen needs: each of the store's
+ * products with the Curated Fit the seller has built for it.
  */
-public record CurationBoardDto(List<TopCuration> tops, List<ProductDto> candidates) {
+public record CurationBoardDto(List<Entry> products) {
 
-    public record TopCuration(ProductDto top, List<MatchDto> matches) {}
+    /** @param picks the fit, in the seller's order; may include products from other stores */
+    public record Entry(ProductDto product, List<ProductDto> picks) {}
 }

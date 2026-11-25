@@ -12,6 +12,6 @@ export const productService = {
   },
   getProduct: (id) => request(`/products/${id}`),
 
-  /** Seller-approved matches for a top, ranked by the style assistant. */
-  getAiMatches: (topId) => request(`/ai/recommendations/${topId}`),
+  /** The seller's Curated Fit: products they suggest wearing with this one. Empty if they made none. */
+  getCuratedFit: (id) => request(`/products/${id}/curated-fit`),
 };

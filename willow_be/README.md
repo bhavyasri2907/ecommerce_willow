@@ -21,12 +21,16 @@ settings and analytics all belong to a store, and a seller can only reach their 
 lists live products from every store, each labelled with the store that sells it. A shopper's bag
 with items from several stores becomes one order per store, each priced with that store's shipping rules.
 
+**Curated Fit**: for any of their products a seller can pick other Willow products to suggest with it,
+from their own store or anyone else's, usually by pasting the product's link from the website.
+Shoppers see the fit on the product page.
+
 ## Structure
 
 ```
 src/main/java/com/willow/
   WillowApplication.java
-  controller/    REST endpoints (storefront: Product, Order, Ai, Recommendation;
+  controller/    REST endpoints (storefront: Product, StorefrontStore, Order, Auth;
                  seller panel: SellerProduct, SellerOrder, Inventory, Analytics, Curation, Store, LiveEvents)
   service/       Business logic and transactions
   repository/    Spring Data JPA repositories
@@ -48,15 +52,15 @@ src/main/resources/
 
 | Area | Endpoints |
 |------|-----------|
-| Storefront | `GET /api/products?type=&storeId=`, `GET /api/products/{id}` (live products only), `GET /api/stores/{id}` (name, tagline, description, logo), `GET /api/stores/policies?ids=` (shipping and returns per store), `GET /api/ai/recommendations/{topId}`, `POST /api/orders` (returns one order per store) |
+| Storefront | `GET /api/products?type=&storeId=`, `GET /api/products/{id}` (live products only), `GET /api/stores/{id}` (name, tagline, description, logo), `GET /api/stores/policies?ids=` (shipping and returns per store), `GET /api/products/{id}/curated-fit` (the seller's suggested pieces), `POST /api/orders` (returns one order per store) |
 | Accounts | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout` (send `Authorization: Bearer <token>`) |
 | Seller: sign-in | `POST /api/seller/auth/register` (opens a new store), `POST /api/seller/auth/login`, `GET /api/seller/auth/me`, `POST /api/seller/auth/logout` |
-| Seller: pairings | `POST /api/seller/recommendations`, `DELETE /api/seller/recommendations?topId=&pantsId=` |
+| Seller: curated fit | `GET /api/seller/curations`, `GET .../resolve?link=`, `GET/POST .../{productId}/picks` (by `link` or `pickId`), `DELETE .../{productId}/picks/{pickId}` |
 | Seller: products | `GET/POST /api/seller/products`, `GET/PUT/DELETE /api/seller/products/{id}`, `PATCH .../{id}/status`, `POST .../bulk`, `GET .../summary` |
 | Seller: photos | `POST /api/seller/uploads` (multipart `file`; JPG, PNG or WebP up to 5 MB) returns `{ url }`; files are served at `/uploads/<file>` |
 | Seller: orders | `GET /api/seller/orders`, `GET .../counts`, `GET .../{id}`, `PATCH .../{id}/status` |
 | Seller: inventory | `GET /api/seller/inventory`, `GET .../summary`, `POST .../{productId}/adjust`, `GET .../movements` |
-| Seller: other | `GET /api/seller/analytics?range=`, `GET /api/seller/curations`, `GET/PUT /api/seller/store`, `GET/PUT /api/seller/settings`, `GET /api/seller/events` (SSE) |
+| Seller: other | `GET /api/seller/analytics?range=`, `GET/PUT /api/seller/store`, `GET/PUT /api/seller/settings`, `GET /api/seller/events` (SSE) |
 
 Every other `/api/seller/...` endpoint needs a signed-in seller: send `Authorization: Bearer <token>`
 (the events stream also accepts `?token=`). Without one the API answers 401. The store a request works
@@ -70,5 +74,6 @@ Errors are returned as `{ "error": "...", "fields": { "name": "message" } }`.
 | Property | Purpose |
 |----------|---------|
 | `willow.cors.allowed-origins` | Origins allowed to call the API (storefront 5173, seller panel 5174) |
+| `willow.storefront.urls` | Addresses of the Willow website; Curated Fit only accepts product links from these |
 | `willow.uploads.dir` | Folder where uploaded product photos are stored (default `uploads/`, not committed) |
 | `willow.timezone` | Time zone used to group analytics by day |

@@ -66,5 +66,12 @@ public record ProductRequest(
         String imageUrl,
 
         @Size(max = 1000, message = "Description must be at most 1000 characters")
-        String description
+        String description,
+
+        /**
+         * Optional Curated Fit: ids of Willow products (from any store) to suggest with this one,
+         * in display order. Omit to leave an existing fit unchanged.
+         */
+        @Size(max = 12, message = "A fit can have at most 12 pieces")
+        List<@NotNull Long> curatedPickIds
 ) {}

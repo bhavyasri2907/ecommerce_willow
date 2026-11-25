@@ -13,7 +13,7 @@ import com.willow.exception.NotFoundException;
 import com.willow.mapper.ProductMapper;
 import com.willow.repository.OrderItemRepository;
 import com.willow.repository.ProductRepository;
-import com.willow.repository.RecommendationRepository;
+import com.willow.repository.CuratedPickRepository;
 import com.willow.repository.StockMovementRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,7 +40,8 @@ public class CatalogService {
 
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
-    private final RecommendationRepository recommendationRepository;
+    private final CuratedPickRepository curatedPickRepository;
+    private final CurationService curationService;
     private final StockMovementRepository stockMovementRepository;
     private final ProductMapper mapper;
     private final StoreService storeService;
@@ -48,14 +49,16 @@ public class CatalogService {
 
     public CatalogService(ProductRepository productRepository,
                           OrderItemRepository orderItemRepository,
-                          RecommendationRepository recommendationRepository,
+                          CuratedPickRepository curatedPickRepository,
+                          CurationService curationService,
                           StockMovementRepository stockMovementRepository,
                           ProductMapper mapper,
                           StoreService storeService,
                           LiveEventPublisher events) {
         this.productRepository = productRepository;
         this.orderItemRepository = orderItemRepository;
-        this.recommendationRepository = recommendationRepository;
+        this.curatedPickRepository = curatedPickRepository;
+        this.curationService = curationService;
         this.stockMovementRepository = stockMovementRepository;
         this.mapper = mapper;
         this.storeService = storeService;
@@ -131,6 +134,7 @@ public class CatalogService {
         if (p.getStock() > 0) {
             stockMovementRepository.save(new StockMovement(p, p.getStock(), StockMovementReason.INITIAL, "Opening stock"));
         }
+        if (req.curatedPickIds() != null) curationService.setPicks(p, req.curatedPickIds());
         ProductDto dto = mapper.toDto(p);
         events.publish(storeId, LiveEvent.PRODUCT_CREATED, dto);
         return dto;
@@ -151,6 +155,8 @@ public class CatalogService {
             stockMovementRepository.save(new StockMovement(p, delta, StockMovementReason.ADJUSTMENT, "Edited on product form"));
         }
         productRepository.saveAndFlush(p);
+        // null leaves the Curated Fit as it is; a list (even an empty one) replaces it.
+        if (req.curatedPickIds() != null) curationService.setPicks(p, req.curatedPickIds());
         ProductDto dto = mapper.toDto(p);
         events.publish(storeId, LiveEvent.PRODUCT_UPDATED, dto);
         if (delta != 0) events.publish(storeId, LiveEvent.INVENTORY_CHANGED, Map.of("productIds", List.of(id)));
@@ -224,7 +230,7 @@ public class CatalogService {
     }
 
     private void remove(Product p) {
-        recommendationRepository.deleteAllInvolving(p.getId());
+        curatedPickRepository.deleteAllInvolving(p.getId());
         stockMovementRepository.deleteByProductId(p.getId());
         productRepository.delete(p);
     }

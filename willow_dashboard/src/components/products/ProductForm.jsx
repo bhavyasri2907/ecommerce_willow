@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Save, X } from 'lucide-react';
 import { productService } from '../../services/productService.js';
+import { curationService, MAX_PICKS } from '../../services/curationService.js';
+import { useAuth } from '../../context/AuthProvider.jsx';
 import { useCategories } from '../../hooks/useCategories.js';
 import { useToast } from '../../context/ToastProvider.jsx';
 import PageHeader from '../common/PageHeader.jsx';
@@ -12,7 +14,9 @@ import ProductThumb from '../common/ProductThumb.jsx';
 import StockBadge from '../inventory/StockBadge.jsx';
 import ProductStatusBadge from './ProductStatusBadge.jsx';
 import ImageUploader from './ImageUploader.jsx';
-import { GENDERS, SIZE_PRESETS, STYLES, SWATCHES } from '../../constants/productOptions.js';
+import PickLinkInput from '../curation/PickLinkInput.jsx';
+import PickList from '../curation/PickList.jsx';
+import { GENDERS, MAX_SIZES, MAX_SIZE_LENGTH, SIZE_PRESETS, STYLES, SWATCHES } from '../../constants/productOptions.js';
 import { STOREFRONT_URL } from '../../constants/config.js';
 import { formatPrice } from '../../utils/formatPrice.js';
 import { formatNumber } from '../../utils/formatNumber.js';
@@ -73,6 +77,27 @@ export default function ProductForm({ product }) {
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [customSize, setCustomSize] = useState('');
+  const [sizeProblem, setSizeProblem] = useState('');
+
+  // Curated Fit: Willow products to suggest with this one. null while an existing fit is loading.
+  const { seller } = useAuth();
+  const [picks, setPicks] = useState(isEdit ? null : []);
+  useEffect(() => {
+    if (!isEdit) return undefined;
+    const controller = new AbortController();
+    curationService
+      .getPicks(product.id, controller.signal)
+      .then(setPicks)
+      .catch((err) => err.name !== 'AbortError' && setPicks(null)); // fit stays as it is on save
+    return () => controller.abort();
+  }, [isEdit, product?.id]);
+
+  async function addPickByLink(link) {
+    const pick = await curationService.resolveLink(link);
+    if (isEdit && pick.id === product.id) throw new Error("A product can't be part of its own fit");
+    if (picks.some((p) => p.id === pick.id)) throw new Error(`"${pick.name}" is already in this fit`);
+    setPicks([...picks, pick]);
+  }
 
   const set = (key) => (value) => {
     setForm((f) => ({ ...f, [key]: value }));
@@ -92,10 +117,30 @@ export default function ProductForm({ product }) {
     set('sizes')(form.sizes.includes(size) ? form.sizes.filter((s) => s !== size) : [...form.sizes, size]);
   }
 
-  function addCustomSize(e) {
-    e.preventDefault();
-    const s = customSize.trim();
-    if (s && !form.sizes.includes(s)) set('sizes')([...form.sizes, s]);
+  /**
+   * Adds whatever is typed in the custom size box. Several sizes can be typed at once,
+   * separated by commas. A size that matches an existing one (in any letter case) just
+   * switches that one on instead of creating a near-duplicate.
+   */
+  function addCustomSizes() {
+    const typed = customSize.split(',').map((s) => s.trim()).filter(Boolean);
+    if (!typed.length) {
+      setCustomSize('');
+      return;
+    }
+    const known = [...presets, ...form.sizes];
+    const next = [...form.sizes];
+    let problem = '';
+    typed.forEach((size) => {
+      const existing = known.find((k) => k.toLowerCase() === size.toLowerCase());
+      const value = existing ?? size;
+      if (next.includes(value)) return;
+      if (value.length > MAX_SIZE_LENGTH) problem = `"${value}" is too long: a size can be up to ${MAX_SIZE_LENGTH} characters.`;
+      else if (next.length >= MAX_SIZES) problem = `A product can have up to ${MAX_SIZES} sizes.`;
+      else next.push(value);
+    });
+    set('sizes')(next);
+    setSizeProblem(problem);
     setCustomSize('');
   }
 
@@ -116,6 +161,8 @@ export default function ProductForm({ product }) {
       sku: form.sku.trim() || null,
       brand: form.brand.trim() || null,
       material: form.material.trim() || null,
+      // Left out when an existing fit could not be loaded, so saving never wipes it.
+      curatedPickIds: picks ? picks.map((p) => p.id) : undefined,
     };
     setSaving(true);
     try {
@@ -241,16 +288,32 @@ export default function ProductForm({ product }) {
                   <span className="chip-add">
                     <input
                       value={customSize}
-                      onChange={(e) => setCustomSize(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && addCustomSize(e)}
-                      placeholder="Custom"
+                      onChange={(e) => {
+                        setCustomSize(e.target.value);
+                        setSizeProblem('');
+                      }}
+                      onKeyDown={(e) => {
+                        // Enter or a comma adds the size; Enter must not save the whole form.
+                        if (e.key === 'Enter' || e.key === ',') {
+                          e.preventDefault();
+                          addCustomSizes();
+                        }
+                      }}
+                      onBlur={addCustomSizes}
+                      placeholder="Add your own size"
                       aria-label="Custom size"
-                      maxLength={10}
                     />
-                    <button type="button" onClick={addCustomSize} aria-label="Add size"><Plus size={14} /></button>
+                    <button type="button" onClick={addCustomSizes} aria-label="Add size"><Plus size={14} /> Add</button>
                   </span>
                 </div>
-                <p className="field__hint">{form.sizes.length ? `${form.sizes.length} variation${form.sizes.length > 1 ? 's' : ''}` : 'No sizes: sold as a single item'}</p>
+                {sizeProblem ? (
+                  <p className="field__error" role="alert">{sizeProblem}</p>
+                ) : (
+                  <p className="field__hint">
+                    {form.sizes.length ? `${form.sizes.length} variation${form.sizes.length > 1 ? 's' : ''} selected. ` : 'No sizes: sold as a single item. '}
+                    Type your own (e.g. 3XL, Free Size) and press Enter.
+                  </p>
+                )}
               </div>
             </div>
           </Card>
@@ -279,6 +342,26 @@ export default function ProductForm({ product }) {
                 )}
               </Field>
             </div>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title="Curated fit"
+              subtitle="Optional. Suggest pieces from anywhere on Willow to wear with this; shoppers see them on its page."
+            />
+            {picks === null ? (
+              <p className="muted small">Loading this product's fit…</p>
+            ) : (
+              <div className="stack-sm">
+                {picks.length > 0 && (
+                  <PickList picks={picks} ownStoreId={seller?.storeId} onRemove={(pick) => setPicks(picks.filter((p) => p.id !== pick.id))} />
+                )}
+                <PickLinkInput
+                  onAdd={addPickByLink}
+                  disabledReason={picks.length >= MAX_PICKS ? `This fit is full (${MAX_PICKS} pieces). Remove one to add another.` : undefined}
+                />
+              </div>
+            )}
           </Card>
         </div>
 

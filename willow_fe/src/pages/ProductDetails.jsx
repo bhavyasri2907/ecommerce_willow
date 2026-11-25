@@ -10,6 +10,17 @@ import ProductImage from '../features/products/components/ProductImage.jsx';
 import ProductCard from '../features/products/components/ProductCard.jsx';
 
 const MORE_FROM_STORE = 4;
+/** Pieces of a Curated Fit shown before "Show all". */
+const FIT_PREVIEW = 3;
+
+function SparkleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3l1.900 5.100L19 10l-5.100 1.900L12 17l-1.900-5.100L5 10l5.100-1.900L12 3z" />
+      <path d="M19 15l.800 2.200L22 18l-2.200.800L19 21l-.800-2.200L16 18l2.200-.800L19 15z" />
+    </svg>
+  );
+}
 
 /** Collection page each category and audience links back to, for the breadcrumb. */
 const TYPE_PATH = { BAG: '/bags', SHOES: '/shoes', ACCESSORY: '/accessories' };
@@ -54,9 +65,8 @@ export default function ProductDetails() {
   const [sizeMissing, setSizeMissing] = useState(false);
   const [policy, setPolicy] = useState(null); // the seller's shipping and returns
   const [more, setMore] = useState([]); // other products from the same store
-  const [matches, setMatches] = useState(null);
-  const [matchesVisible, setMatchesVisible] = useState(false);
-  const [matchStatus, setMatchStatus] = useState('idle'); // idle | loading | ready | error
+  const [fit, setFit] = useState(null); // the seller's Curated Fit for this product; null while loading
+  const [fitExpanded, setFitExpanded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,9 +76,8 @@ export default function ProductDetails() {
     setSizeMissing(false);
     setPolicy(null);
     setMore([]);
-    setMatches(null);
-    setMatchesVisible(false);
-    setMatchStatus('idle');
+    setFit(null);
+    setFitExpanded(false);
     window.scrollTo(0, 0);
 
     productService
@@ -78,6 +87,7 @@ export default function ProductDetails() {
         setProduct(p);
         // Extras from the seller; the page works without them if either call fails.
         storeService.getPolicies([p.storeId]).then(([found]) => !cancelled && setPolicy(found ?? null)).catch(() => {});
+        productService.getCuratedFit(p.id).then((picks) => !cancelled && setFit(picks)).catch(() => !cancelled && setFit([]));
         productService
           .listProducts({ storeId: p.storeId })
           .then((items) => {
@@ -94,22 +104,6 @@ export default function ProductDetails() {
       cancelled = true;
     };
   }, [id]);
-
-  async function handleFindMatches() {
-    if (matches) {
-      setMatchesVisible((v) => !v);
-      return;
-    }
-    setMatchStatus('loading');
-    try {
-      const data = await productService.getAiMatches(id);
-      setMatches(data);
-      setMatchesVisible(true);
-      setMatchStatus('ready');
-    } catch {
-      setMatchStatus('error');
-    }
-  }
 
   if (product === null) return <p className="state-msg">Loading…</p>;
   if (product === false) {
@@ -321,47 +315,57 @@ export default function ProductDetails() {
             <span className="pdp-seller__go">Visit store <ChevronRightIcon size={14} /></span>
           </Link>
 
-          {product.type === 'TOP' && (
-            <div className="ai-box">
-              <div className="ai-head"><span className="dot" /><span>AI Style Assistant</span></div>
-              <p className="ai-sub">Not sure what to wear with this? See what this seller has paired it with.</p>
-              <button className="ai-cta" onClick={handleFindMatches}>
-                {matchStatus === 'loading' ? 'Finding matches…' : 'Find matching pieces'}
-              </button>
-
-              {matchStatus === 'error' && (
-                <p className="state-msg" style={{ padding: '12px 0 0' }}>
-                  Couldn't reach the style assistant right now.
+          {/* Seller's Curated Fit: what this seller suggests wearing with the piece. */}
+          <section className="pdp-fit" aria-labelledby="pdp-fit-title">
+            <div className="pdp-fit__head">
+              <span className="pdp-fit__icon" aria-hidden="true"><SparkleIcon /></span>
+              <div>
+                <h2 id="pdp-fit-title">Seller's Curated Fit</h2>
+                <p>
+                  {fit?.length
+                    ? `Picked by ${product.storeName} to wear with this piece.`
+                    : `Pieces ${product.storeName} suggests wearing with this.`}
                 </p>
-              )}
-
-              {matches && matchesVisible && (
-                <div className="match-list">
-                  {matches.length === 0 && (
-                    <p className="state-msg" style={{ padding: 0 }}>
-                      Nothing has been paired with this top yet.
-                    </p>
-                  )}
-                  {matches.map((m) => (
-                    <div className="match" key={m.product.id}>
-                      <ProductImage product={m.product} className="msw" />
-                      <div>
-                        <div className="mname">{m.product.name}</div>
-                        <div className="mreason">{m.reason}</div>
-                        <div className="mprice">{formatPrice(m.product.price)}</div>
-                      </div>
-                      <div>
-                        <div className="mscore">{m.matchScore}% match</div>
-                        <button className="match-view-btn" onClick={() => navigate(`/product/${m.product.id}`)}>
-                          View
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              </div>
+              {fit?.length > 0 && <span className="pdp-fit__count">{fit.length}</span>}
             </div>
-          )}
+
+            {fit === null ? (
+              <p className="pdp-fit__empty">Loading…</p>
+            ) : fit.length === 0 ? (
+              <p className="pdp-fit__empty">
+                {product.storeName} hasn't put a fit together for this piece yet.{' '}
+                <Link to={storeUrl}>Browse their store</Link> for ideas.
+              </p>
+            ) : (
+              <>
+                <ul className="pdp-fit__list">
+                  {(fitExpanded ? fit : fit.slice(0, FIT_PREVIEW)).map((p) => (
+                    <li key={p.id}>
+                      <Link to={`/product/${p.id}`} className="pdp-fit__item">
+                        <ProductImage product={p} className="pdp-fit__thumb" />
+                        <span className="pdp-fit__text">
+                          <span className="pdp-fit__store">{p.brand || p.storeName}</span>
+                          <strong>{p.name}</strong>
+                          <span className="pdp-fit__meta">
+                            {p.typeLabel} · {formatPrice(p.price)}
+                            {p.discountPercent && <em> · {p.discountPercent}% off</em>}
+                            {p.stockStatus === 'OUT_OF_STOCK' && <em className="is-out"> · Sold out</em>}
+                          </span>
+                        </span>
+                        <span className="pdp-fit__go">View <ChevronRightIcon size={14} /></span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+                {fit.length > FIT_PREVIEW && (
+                  <button type="button" className="pdp-fit__more" onClick={() => setFitExpanded((v) => !v)}>
+                    {fitExpanded ? 'Show fewer' : `Show all ${fit.length} pieces`}
+                  </button>
+                )}
+              </>
+            )}
+          </section>
         </div>
       </div>
 
