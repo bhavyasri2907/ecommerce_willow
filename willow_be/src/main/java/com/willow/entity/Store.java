@@ -4,15 +4,14 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 
-/** The seller's public storefront identity. Single row (id = 1). */
+/** A seller's store: its public identity on the storefront and its contact details. */
 @Entity
-@Table(name = "store_profile")
-public class StoreProfile {
-
-    public static final long SINGLETON_ID = 1L;
+@Table(name = "stores")
+public class Store {
 
     @Id
-    private Long id = SINGLETON_ID;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private String storeName;
@@ -36,6 +35,9 @@ public class StoreProfile {
 
     private String website;
     private String instagram;
+
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
 
     private Instant updatedAt;
 
@@ -89,5 +91,6 @@ public class StoreProfile {
     public String getInstagram() { return instagram; }
     public void setInstagram(String instagram) { this.instagram = instagram; }
 
+    public Instant getCreatedAt() { return createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }
 }

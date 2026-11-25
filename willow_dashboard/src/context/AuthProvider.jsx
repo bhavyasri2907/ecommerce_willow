@@ -6,11 +6,14 @@ const AuthContext = createContext(null);
 
 /**
  * The signed-in seller. `status` is 'loading' while a saved session is checked with
- * the server, then 'ready'; `seller` is null when nobody is signed in.
+ * the server, then 'ready'; `seller` is null when nobody is signed in. `signedOut` is true
+ * when that is because the seller chose to sign out.
  */
 export function AuthProvider({ children }) {
   const [seller, setSeller] = useState(null);
   const [status, setStatus] = useState(() => (tokenStore.get() ? 'loading' : 'ready'));
+  // True after the seller chose "Sign out" (as opposed to their session expiring).
+  const [signedOut, setSignedOut] = useState(false);
 
   // Restore the session saved in this browser, if the server still accepts it.
   useEffect(() => {
@@ -39,6 +42,7 @@ export function AuthProvider({ children }) {
   const startSession = useCallback(({ token, seller: signedIn }) => {
     tokenStore.set(token);
     setSeller(signedIn);
+    setSignedOut(false);
     return signedIn;
   }, []);
 
@@ -54,12 +58,13 @@ export function AuthProvider({ children }) {
     const token = tokenStore.get();
     tokenStore.clear();
     setSeller(null);
+    setSignedOut(true);
     if (token) authService.logout(token).catch(() => {});
   }, []);
 
   const value = useMemo(
-    () => ({ seller, status, login, register, logout }),
-    [seller, status, login, register, logout]
+    () => ({ seller, status, signedOut, login, register, logout }),
+    [seller, status, signedOut, login, register, logout]
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

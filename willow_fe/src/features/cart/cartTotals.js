@@ -12,13 +12,17 @@ export function isOutOfStock(product) {
 
 /**
  * Price breakdown for the given bag entries ({ product, qty }).
- * Shipping follows the same rule the backend applies when the order is created;
- * it is null while the store's policies are not known.
+ *
+ * Each store ships its own items, so shipping is worked out per store with that store's
+ * rules (`policies` is keyed by store id) and added up - the same way the backend splits
+ * a bag into one order per store. `shipping` is null while any store's rules are unknown.
+ * `sellers` lists each store's share: { storeId, storeName, subtotal, shipping, freeShippingThreshold }.
  */
-export function cartTotals(entries, policies) {
+export function cartTotals(entries, policies = {}) {
   let mrp = 0;
   let subtotal = 0;
   let units = 0;
+  const subtotalByStore = new Map();
 
   entries.forEach(({ product, qty }) => {
     const price = Number(product.price);
@@ -26,11 +30,17 @@ export function cartTotals(entries, policies) {
     mrp += (original > price ? original : price) * qty;
     subtotal += price * qty;
     units += qty;
+    subtotalByStore.set(product.storeId, (subtotalByStore.get(product.storeId) ?? 0) + price * qty);
   });
 
-  let shipping = null;
-  if (entries.length === 0) shipping = 0;
-  else if (policies) shipping = subtotal >= Number(policies.freeShippingThreshold) ? 0 : Number(policies.shippingFee);
+  const sellers = [...subtotalByStore].map(([storeId, storeSubtotal]) => {
+    const policy = policies[storeId];
+    const freeShippingThreshold = policy ? Number(policy.freeShippingThreshold) : null;
+    const shipping = !policy ? null : storeSubtotal >= freeShippingThreshold ? 0 : Number(policy.shippingFee);
+    return { storeId, storeName: policy?.storeName, subtotal: storeSubtotal, shipping, freeShippingThreshold };
+  });
 
-  return { units, mrp, discount: mrp - subtotal, subtotal, shipping, total: subtotal + (shipping ?? 0) };
+  const shipping = sellers.some((s) => s.shipping === null) ? null : sellers.reduce((sum, s) => sum + s.shipping, 0);
+
+  return { units, mrp, discount: mrp - subtotal, subtotal, shipping, sellers, total: subtotal + (shipping ?? 0) };
 }

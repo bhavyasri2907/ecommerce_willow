@@ -1,44 +1,98 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { productService } from '../services/productService.js';
+import { storeService } from '../services/storeService.js';
 import { useCart } from '../context/CartContext.jsx';
-import { useStore } from '../hooks/useStore.js';
 import { formatPrice } from '../utils/formatPrice.js';
+import { CATEGORY_PAGES } from '../utils/constants.js';
+import { ChevronLeftIcon, ChevronRightIcon, HeartIcon, ShoppingCartIcon } from '../assets/icons/NavIcons.jsx';
 import ProductImage from '../features/products/components/ProductImage.jsx';
+import ProductCard from '../features/products/components/ProductCard.jsx';
 
-/** Shown under the price so shoppers know how urgent it is. */
+const MORE_FROM_STORE = 4;
+
+/** Collection page each category and audience links back to, for the breadcrumb. */
+const TYPE_PATH = { BAG: '/bags', SHOES: '/shoes', ACCESSORY: '/accessories' };
+const GENDER_PATH = { MEN: '/men', WOMEN: '/women' };
+const pageTitle = (path) => CATEGORY_PAGES.find((p) => p.path === path)?.title;
+
+function TruckIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 6h11v10H3z" />
+      <path d="M14 9h4l3 3v4h-7" />
+      <circle cx="7" cy="17.500" r="1.800" />
+      <circle cx="17" cy="17.500" r="1.800" />
+    </svg>
+  );
+}
+
+function ReturnIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 9h11a5 5 0 0 1 0 10H8" />
+      <path d="M8 5 4 9l4 4" />
+    </svg>
+  );
+}
+
+/** How much is left, shown under the price. */
 function StockNote({ product }) {
-  if (product.stockStatus === 'OUT_OF_STOCK') return <p className="pd-stock pd-stock--out">Sold out</p>;
-  if (product.stockStatus === 'LOW_STOCK') return <p className="pd-stock pd-stock--low">Only {product.stock} left</p>;
-  return <p className="pd-stock">In stock</p>;
+  if (product.stockStatus === 'OUT_OF_STOCK') return <span className="pdp-stock pdp-stock--out">Sold out</span>;
+  if (product.stockStatus === 'LOW_STOCK') return <span className="pdp-stock pdp-stock--low">Only {product.stock} left</span>;
+  return <span className="pdp-stock">In stock</span>;
 }
 
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const store = useStore();
   const { addToCart, toggleWishlist, isInWishlist } = useCart();
 
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] = useState(null); // null = loading, false = unavailable
   const [photo, setPhoto] = useState(0); // index into product.images
   const [size, setSize] = useState(null);
   const [sizeMissing, setSizeMissing] = useState(false);
+  const [policy, setPolicy] = useState(null); // the seller's shipping and returns
+  const [more, setMore] = useState([]); // other products from the same store
   const [matches, setMatches] = useState(null);
   const [matchesVisible, setMatchesVisible] = useState(false);
   const [matchStatus, setMatchStatus] = useState('idle'); // idle | loading | ready | error
 
-  const isSaved = product ? isInWishlist(product.id) : false;
-
   useEffect(() => {
+    let cancelled = false;
     setProduct(null);
     setPhoto(0);
     setSize(null);
     setSizeMissing(false);
+    setPolicy(null);
+    setMore([]);
     setMatches(null);
     setMatchesVisible(false);
     setMatchStatus('idle');
     window.scrollTo(0, 0);
-    productService.getProduct(id).then(setProduct).catch(() => setProduct(false));
+
+    productService
+      .getProduct(id)
+      .then((p) => {
+        if (cancelled) return;
+        setProduct(p);
+        // Extras from the seller; the page works without them if either call fails.
+        storeService.getPolicies([p.storeId]).then(([found]) => !cancelled && setPolicy(found ?? null)).catch(() => {});
+        productService
+          .listProducts({ storeId: p.storeId })
+          .then((items) => {
+            if (cancelled) return;
+            const others = items.filter((item) => item.id !== p.id);
+            others.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setMore(others.slice(0, MORE_FROM_STORE));
+          })
+          .catch(() => {});
+      })
+      .catch(() => !cancelled && setProduct(false));
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   async function handleFindMatches() {
@@ -71,7 +125,35 @@ export default function ProductDetails() {
   const images = product.images ?? [];
   const sizes = product.sizes ?? [];
   const soldOut = product.stockStatus === 'OUT_OF_STOCK';
-  const seller = store?.storeName;
+  const isSaved = isInWishlist(product.id);
+  const storeUrl = `/store/${product.storeId}`;
+  const step = (by) => setPhoto((i) => (i + by + images.length) % images.length);
+
+  // Breadcrumb: Home / Women / Bottoms. Bags, shoes and accessories have their own page; clothing lives under Men/Women.
+  const genderPath = GENDER_PATH[product.gender];
+  const typePath = TYPE_PATH[product.type] ?? genderPath ?? '/all';
+  const crumbs = [
+    { label: 'Home', to: '/' },
+    genderPath && { label: pageTitle(genderPath), to: genderPath },
+    { label: product.typeLabel, to: typePath },
+  ].filter(Boolean);
+
+  const specs = [
+    product.color && {
+      label: 'Colour',
+      value: (
+        <>
+          <span className="pdp-dot" style={{ background: product.hex }} aria-hidden="true" />
+          {product.color}
+        </>
+      ),
+    },
+    product.material && { label: 'Material', value: product.material },
+    product.style && { label: 'Style', value: product.style },
+    { label: 'Category', value: product.typeLabel },
+    product.genderLabel && { label: 'For', value: product.genderLabel },
+    sizes.length > 0 && { label: 'Sizes', value: sizes.join(', ') },
+  ].filter(Boolean);
 
   function handleAddToBag() {
     if (sizes.length > 0 && !size) {
@@ -82,19 +164,27 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="product-detail-page">
-      <button className="back-link" onClick={() => navigate(-1)}>← Back</button>
+    <div className="pdp">
+      <nav className="pdp-crumbs" aria-label="Breadcrumb">
+        {crumbs.map((c) => (
+          <span key={c.label}>
+            <Link to={c.to}>{c.label}</Link>
+            <span className="pdp-crumbs__sep" aria-hidden="true">/</span>
+          </span>
+        ))}
+        <span className="pdp-crumbs__current">{product.name}</span>
+      </nav>
 
-      <div className="pd">
-        <div className="pd-gallery">
-          <ProductImage product={product} src={images[photo] ?? null} className="pd-photo" iconSize="44%" />
+      <div className="pdp-main">
+        {/* Gallery: thumbnail rail beside the photo; stays in view while the details scroll. */}
+        <div className="pdp-gallery">
           {images.length > 1 && (
-            <div className="pd-thumbs">
+            <div className="pdp-rail">
               {images.map((url, i) => (
                 <button
                   key={url}
                   type="button"
-                  className={`pd-thumb ${i === photo ? 'is-on' : ''}`}
+                  className={`pdp-thumb ${i === photo ? 'is-on' : ''}`}
                   onClick={() => setPhoto(i)}
                   aria-label={`Photo ${i + 1} of ${images.length}`}
                   aria-pressed={i === photo}
@@ -104,36 +194,54 @@ export default function ProductDetails() {
               ))}
             </div>
           )}
+
+          <div className="pdp-stage">
+            <ProductImage product={product} src={images[photo] ?? null} iconSize="42%" />
+            {product.discountPercent && !soldOut && <span className="pdp-flag">{product.discountPercent}% off</span>}
+            {soldOut && <span className="pdp-flag pdp-flag--muted">Sold out</span>}
+            {images.length > 1 && (
+              <>
+                <button type="button" className="pdp-arrow pdp-arrow--prev" onClick={() => step(-1)} aria-label="Previous photo">
+                  <ChevronLeftIcon size={18} />
+                </button>
+                <button type="button" className="pdp-arrow pdp-arrow--next" onClick={() => step(1)} aria-label="Next photo">
+                  <ChevronRightIcon size={18} />
+                </button>
+                <span className="pdp-count">{photo + 1} / {images.length}</span>
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="pd-info">
-          <div className="kicker">
-            {[product.genderLabel !== 'Unisex' && product.genderLabel, product.typeLabel].filter(Boolean).join(' · ')}
-          </div>
-          {(product.brand || seller) && <div className="pd-brand">{product.brand || seller}</div>}
-          <h1>{product.name}</h1>
+        <div className="pdp-info">
+          <Link to={storeUrl} className="pdp-brand">{product.brand || product.storeName}</Link>
+          <h1 className="pdp-title">{product.name}</h1>
 
-          <div className="pd-price">
-            <span className="price">{formatPrice(product.price)}</span>
+          <div className="pdp-price">
+            <span className="pdp-price__now">{formatPrice(product.price)}</span>
             {product.discountPercent && (
               <>
-                <span className="original-price">{formatPrice(product.originalPrice)}</span>
-                <span className="pd-off">{product.discountPercent}% off</span>
+                <span className="pdp-price__was">{formatPrice(product.originalPrice)}</span>
+                <span className="pdp-price__off">{product.discountPercent}% off</span>
               </>
             )}
           </div>
           <StockNote product={product} />
 
           {sizes.length > 0 && (
-            <div className="pd-sizes">
-              <div className="pd-label">Size{size ? `: ${size}` : ''}</div>
-              <div className="pd-size-list" role="group" aria-label="Size">
+            <div className="pdp-block">
+              <div className="pdp-label">
+                <span>Select size</span>
+                {size && <span className="pdp-label__value">{size}</span>}
+              </div>
+              <div className="pdp-sizes" role="group" aria-label="Size">
                 {sizes.map((s) => (
                   <button
                     key={s}
                     type="button"
-                    className={`pd-size ${s === size ? 'is-on' : ''}`}
+                    className={`pdp-size ${s === size ? 'is-on' : ''}`}
                     aria-pressed={s === size}
+                    disabled={soldOut}
                     onClick={() => {
                       setSize(s);
                       setSizeMissing(false);
@@ -143,46 +251,82 @@ export default function ProductDetails() {
                   </button>
                 ))}
               </div>
-              {sizeMissing && <p className="pd-size-error" role="alert">Please choose a size.</p>}
+              {sizeMissing && <p className="pdp-error" role="alert">Please choose a size first.</p>}
             </div>
           )}
 
-          <div className="pd-action-row">
-            <button className="add-btn" onClick={handleAddToBag} disabled={soldOut}>
+          <div className="pdp-actions">
+            <button type="button" className="pdp-add" onClick={handleAddToBag} disabled={soldOut}>
+              <ShoppingCartIcon size={18} />
               {soldOut ? 'Sold out' : 'Add to bag'}
             </button>
             <button
-              className={`pd-wishlist-btn ${isSaved ? 'saved' : ''}`}
+              type="button"
+              className={`pdp-save ${isSaved ? 'is-saved' : ''}`}
               onClick={() => toggleWishlist(product)}
-              title={isSaved ? 'Remove from Wishlist' : 'Save to Wishlist'}
+              aria-pressed={isSaved}
             >
-              {isSaved ? '♥ Saved to Wishlist' : '♡ Save to Wishlist'}
+              <HeartIcon size={18} />
+              {isSaved ? 'Saved' : 'Wishlist'}
             </button>
           </div>
 
-          {product.description && <p className="desc">{product.description}</p>}
+          {policy && (
+            <ul className="pdp-perks">
+              <li>
+                <TruckIcon />
+                <span>
+                  <strong>
+                    {Number(policy.shippingFee) === 0 || Number(policy.freeShippingThreshold) <= Number(product.price)
+                      ? 'Free delivery'
+                      : `Delivery ${formatPrice(policy.shippingFee)}`}
+                  </strong>
+                  {Number(policy.shippingFee) > 0 && Number(policy.freeShippingThreshold) > Number(product.price) && (
+                    <> · free on orders over {formatPrice(policy.freeShippingThreshold)} from this seller</>
+                  )}
+                </span>
+              </li>
+              <li>
+                <ReturnIcon />
+                <span>
+                  {policy.returnWindowDays > 0 ? (
+                    <><strong>{policy.returnWindowDays}-day returns</strong> · send it back if it isn't right</>
+                  ) : (
+                    <strong>This seller does not accept returns</strong>
+                  )}
+                </span>
+              </li>
+            </ul>
+          )}
 
-          <dl className="pd-facts">
-            {product.color && (
-              <div>
-                <dt>Colour</dt>
-                <dd>
-                  <span className="pd-dot" style={{ background: product.hex }} aria-hidden="true" />
-                  {product.color}
-                </dd>
-              </div>
-            )}
-            {product.material && <div><dt>Material</dt><dd>{product.material}</dd></div>}
-            {product.style && <div><dt>Style</dt><dd>{product.style}</dd></div>}
-            {seller && <div><dt>Sold by</dt><dd>{seller}</dd></div>}
-          </dl>
+          <section className="pdp-section">
+            <h2>Product details</h2>
+            {product.description && <p className="pdp-desc">{product.description}</p>}
+            <dl className="pdp-specs">
+              {specs.map((s) => (
+                <div key={s.label}>
+                  <dt>{s.label}</dt>
+                  <dd>{s.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+
+          <Link to={storeUrl} className="pdp-seller">
+            <span className="pdp-seller__avatar" aria-hidden="true">{product.storeName.slice(0, 1).toUpperCase()}</span>
+            <span className="pdp-seller__text">
+              <span>Sold by</span>
+              <strong>{product.storeName}</strong>
+            </span>
+            <span className="pdp-seller__go">Visit store <ChevronRightIcon size={14} /></span>
+          </Link>
 
           {product.type === 'TOP' && (
             <div className="ai-box">
               <div className="ai-head"><span className="dot" /><span>AI Style Assistant</span></div>
-              <p className="ai-sub">Not sure what to wear with this? See the pants this seller has paired it with.</p>
+              <p className="ai-sub">Not sure what to wear with this? See what this seller has paired it with.</p>
               <button className="ai-cta" onClick={handleFindMatches}>
-                {matchStatus === 'loading' ? 'Finding matches…' : 'Find matching pants'}
+                {matchStatus === 'loading' ? 'Finding matches…' : 'Find matching pieces'}
               </button>
 
               {matchStatus === 'error' && (
@@ -195,7 +339,7 @@ export default function ProductDetails() {
                 <div className="match-list">
                   {matches.length === 0 && (
                     <p className="state-msg" style={{ padding: 0 }}>
-                      No pants have been paired with this top yet.
+                      Nothing has been paired with this top yet.
                     </p>
                   )}
                   {matches.map((m) => (
@@ -220,6 +364,20 @@ export default function ProductDetails() {
           )}
         </div>
       </div>
+
+      {more.length > 0 && (
+        <section className="pdp-more">
+          <div className="pdp-more__head">
+            <h2>More from {product.storeName}</h2>
+            <Link to={storeUrl}>View all</Link>
+          </div>
+          <div className="grid">
+            {more.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

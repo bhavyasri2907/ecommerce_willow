@@ -15,53 +15,50 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Fans {@link LiveEvent}s out to every connected dashboard over Server-Sent Events.
- * Events are delivered after the publishing transaction commits, so a client that
- * refetches on an event always sees the committed data.
+ * Sends each {@link LiveEvent} to the dashboards signed in to that event's store, over
+ * Server-Sent Events. Events are delivered after the publishing transaction commits, so
+ * a client that refetches on an event always sees the committed data.
  */
 @Component
 public class LiveEventBroadcaster {
 
     private static final Logger log = LoggerFactory.getLogger(LiveEventBroadcaster.class);
-
     /** Browsers' EventSource reconnects automatically when a stream times out. */
     private static final long EMITTER_TIMEOUT_MS = Duration.ofMinutes(30).toMillis();
 
-    private final Set<SseEmitter> emitters = ConcurrentHashMap.newKeySet();
+    /** Open dashboard streams, grouped by the store they belong to. */
+    private final Map<Long, Set<SseEmitter>> emittersByStore = new ConcurrentHashMap<>();
 
-    public SseEmitter subscribe() {
+    public SseEmitter subscribe(Long storeId) {
+        Set<SseEmitter> emitters = emittersByStore.computeIfAbsent(storeId, id -> ConcurrentHashMap.newKeySet());
         SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);
         emitters.add(emitter);
         emitter.onCompletion(() -> emitters.remove(emitter));
         emitter.onTimeout(() -> emitters.remove(emitter));
         emitter.onError(e -> emitters.remove(emitter));
-
-        send(emitter, LiveEvent.of("connected", Map.of("clients", emitters.size())));
+        send(emitters, emitter, LiveEvent.of(storeId, "connected", Map.of("clients", emitters.size())));
         return emitter;
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void onLiveEvent(LiveEvent event) {
-        emitters.forEach(emitter -> send(emitter, event));
+        Set<SseEmitter> emitters = emittersByStore.get(event.storeId());
+        if (emitters != null) emitters.forEach(emitter -> send(emitters, emitter, event));
     }
 
     /** Comment frames keep proxies and load balancers from closing idle streams. */
     @Scheduled(fixedRate = 20_000)
     public void heartbeat() {
-        emitters.forEach(emitter -> {
+        emittersByStore.values().forEach(emitters -> emitters.forEach(emitter -> {
             try {
                 emitter.send(SseEmitter.event().comment("ping"));
             } catch (IOException | IllegalStateException e) {
                 emitters.remove(emitter);
             }
-        });
+        }));
     }
 
-    public int connectedClients() {
-        return emitters.size();
-    }
-
-    private void send(SseEmitter emitter, LiveEvent event) {
+    private void send(Set<SseEmitter> emitters, SseEmitter emitter, LiveEvent event) {
         try {
             emitter.send(SseEmitter.event().data(event, MediaType.APPLICATION_JSON));
         } catch (IOException | IllegalStateException e) {

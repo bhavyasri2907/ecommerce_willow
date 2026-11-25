@@ -1,11 +1,11 @@
 package com.willow.mapper;
 
-import com.willow.service.StoreService;
 import com.willow.dto.response.ProductDto;
 import com.willow.dto.response.ProductSales;
 import com.willow.entity.OrderStatus;
 import com.willow.entity.Product;
 import com.willow.repository.OrderItemRepository;
+import com.willow.service.StoreService;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -14,8 +14,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-/** Builds dashboard-grade ProductDtos: adds sales figures and the seller's low-stock threshold. */
+/** Builds dashboard-grade ProductDtos: adds sales figures and the owning store's low-stock threshold. */
 @Component
 public class ProductMapper {
 
@@ -34,10 +35,13 @@ public class ProductMapper {
     }
 
     public List<ProductDto> toDtos(Collection<Product> products) {
+        if (products.isEmpty()) return List.of();
         Map<Long, ProductSales> sales = lifetimeSales();
-        int threshold = storeService.lowStockThreshold();
+        Map<Long, Integer> thresholds = storeService.lowStockThresholds(
+                products.stream().map(p -> p.getStore().getId()).collect(Collectors.toSet()));
         return products.stream()
-                .map(p -> ProductDto.of(p, sales.getOrDefault(p.getId(), ProductSales.NONE), threshold))
+                .map(p -> ProductDto.of(p, sales.getOrDefault(p.getId(), ProductSales.NONE),
+                        thresholds.get(p.getStore().getId())))
                 .toList();
     }
 

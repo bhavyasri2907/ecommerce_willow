@@ -8,7 +8,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** Storefront checkout. New orders appear on the seller dashboard immediately. */
+import java.util.List;
+
+/** Storefront checkout. New orders appear on each seller's dashboard immediately. */
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {
@@ -19,8 +21,9 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    /** Returns one order per store the bag drew from. */
     @PostMapping
-    public ResponseEntity<OrderDto> place(@Valid @RequestBody CreateOrderRequest req) {
+    public ResponseEntity<List<OrderDto>> place(@Valid @RequestBody CreateOrderRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(orderService.place(req));
     }
 }

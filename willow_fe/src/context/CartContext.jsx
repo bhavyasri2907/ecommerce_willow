@@ -10,23 +10,6 @@ export function CartProvider({ children }) {
   // Wishlist: { [productId]: product }. Starts empty; filled by the heart buttons.
   const [wishlist, setWishlist] = useState({});
 
-  // Seller Uploaded Products & Outfit Pairings State
-  const [sellerProducts, setSellerProducts] = useState([]);
-  const [sellerPairings, setSellerPairings] = useState([
-    {
-      topId: '101',
-      matchProduct: { id: 201, name: 'Black Wide-Leg Pants', type: 'PANTS', color: 'Black', hex: '#2B2730', style: 'Casual', price: 1499, description: 'High-rise wide-leg trousers.' },
-      reason: 'Seller Curated: High-contrast casual pairing with relaxed crop top silhouette.',
-      matchScore: 98
-    },
-    {
-      topId: '101',
-      matchProduct: { id: 911, name: 'Classic Canvas Lows', type: 'SHOES', color: 'Burgundy', hex: '#7D2D40', style: 'Casual', price: 2499, description: 'Heritage canvas low-top sneakers.' },
-      reason: 'Stylist Picked Shoes: Adds a bold vintage pop of color to blue crop top.',
-      matchScore: 96
-    }
-  ]);
-
   /** `size` is the one picked on the product page; without it the bag keeps or defaults the size. */
   function addToCart(product, size) {
     setItems((prev) => {
@@ -112,19 +95,6 @@ export function CartProvider({ children }) {
     return !!wishlist[productId];
   }
 
-  // Seller Handlers
-  function addSellerProduct(newProduct) {
-    setSellerProducts((prev) => [newProduct, ...prev]);
-  }
-
-  function addOutfitPairing(pairing) {
-    setSellerPairings((prev) => [pairing, ...prev]);
-  }
-
-  function getPairingsForTop(topId) {
-    return sellerPairings.filter((p) => String(p.topId) === String(topId));
-  }
-
   const count = useMemo(
     () => Object.values(items).reduce((sum, i) => sum + i.qty, 0),
     [items]
@@ -158,12 +128,6 @@ export function CartProvider({ children }) {
     toggleWishlist,
     addToWishlist,
     isInWishlist,
-    // Seller Studio & Outfit Curations
-    sellerProducts,
-    sellerPairings,
-    addSellerProduct,
-    addOutfitPairing,
-    getPairingsForTop,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

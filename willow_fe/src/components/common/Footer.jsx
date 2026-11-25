@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SELLER_PANEL_URL } from '../../utils/constants.js';
 import { Link } from 'react-router-dom';
 import footerBg from '../../assets/images/footer.png';
 import WillowLogo from './WillowLogo.jsx';
@@ -73,7 +74,7 @@ export default function Footer() {
           <div className="footer-col">
             <h4 className="footer-heading">EXPERIENCE</h4>
             <ul className="footer-links">
-              <li><Link to="/studio">Seller Studio</Link></li>
+              <li><a href={SELLER_PANEL_URL} target="_blank" rel="noreferrer">Sell on Willow</a></li>
               <li><Link to="/">AI Style Assistant</Link></li>
               <li><Link to="/all">Curated Pairings</Link></li>
               <li><Link to="/new-in">Fit Guarantee</Link></li>

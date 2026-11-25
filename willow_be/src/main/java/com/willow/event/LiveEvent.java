@@ -3,10 +3,11 @@ package com.willow.event;
 import java.time.Instant;
 
 /**
- * A change the seller dashboard should react to, e.g. {@code order.created}.
- * Published inside a transaction and only broadcast once that transaction commits.
+ * A change one store's dashboard should react to, e.g. {@code order.created}.
+ * Published inside a transaction and only broadcast once that transaction commits,
+ * and only to dashboards signed in to {@code storeId}.
  */
-public record LiveEvent(String type, Object payload, Instant at) {
+public record LiveEvent(Long storeId, String type, Object payload, Instant at) {
 
     public static final String ORDER_CREATED = "order.created";
     public static final String ORDER_UPDATED = "order.updated";
@@ -19,7 +20,7 @@ public record LiveEvent(String type, Object payload, Instant at) {
     public static final String STORE_UPDATED = "store.updated";
     public static final String SETTINGS_UPDATED = "settings.updated";
 
-    public static LiveEvent of(String type, Object payload) {
-        return new LiveEvent(type, payload, Instant.now());
+    public static LiveEvent of(Long storeId, String type, Object payload) {
+        return new LiveEvent(storeId, type, payload, Instant.now());
     }
 }

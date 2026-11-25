@@ -12,11 +12,13 @@ import java.util.List;
 
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
 
+    /** The latest stock changes across one store's products. */
     @EntityGraph(attributePaths = "product")
-    List<StockMovement> findAllByOrderByCreatedAtDescIdDesc(Pageable pageable);
+    List<StockMovement> findByProductStoreIdOrderByCreatedAtDescIdDesc(Long storeId, Pageable pageable);
 
+    /** The latest stock changes for one of a store's products. */
     @EntityGraph(attributePaths = "product")
-    List<StockMovement> findByProductIdOrderByCreatedAtDescIdDesc(Long productId, Pageable pageable);
+    List<StockMovement> findByProductIdAndProductStoreIdOrderByCreatedAtDescIdDesc(Long productId, Long storeId, Pageable pageable);
 
     @Modifying
     @Query("delete from StockMovement m where m.product.id = :productId")

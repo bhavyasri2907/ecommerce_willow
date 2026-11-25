@@ -7,7 +7,7 @@ import Wishlist from '../pages/Wishlist.jsx';
 import Account from '../pages/Account.jsx';
 import AccountOverview from '../features/account/components/AccountOverview.jsx';
 import AccountSection from '../features/account/components/AccountSection.jsx';
-import SellerStudio from '../pages/SellerStudio.jsx';
+import StorePage from '../pages/StorePage.jsx';
 import Cart from '../pages/Cart.jsx';
 import Checkout from '../pages/Checkout.jsx';
 import Auth from '../pages/Auth.jsx';
@@ -28,7 +28,7 @@ export default function AppRoutes() {
           <Route index element={<AccountOverview />} />
           <Route path=":section" element={<AccountSection />} />
         </Route>
-        <Route path="/studio" element={<SellerStudio />} />
+        <Route path="/store/:storeId" element={<StorePage />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/login" element={<Auth key="login" mode="login" />} />

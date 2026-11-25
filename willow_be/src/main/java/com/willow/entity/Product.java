@@ -20,10 +20,16 @@ public class Product {
     @SequenceGenerator(name = "product_seq", sequenceName = "product_seq", initialValue = 1000, allocationSize = 1)
     private Long id;
 
+    /** The store that lists this product. Set once, when the product is created. */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "store_id", nullable = false, updatable = false)
+    private Store store;
+
     @Column(nullable = false)
     private String name;
 
-    @Column(unique = true, length = 40)
+    /** Unique within the store. */
+    @Column(length = 40)
     private String sku;
 
     @Enumerated(EnumType.STRING)
@@ -100,6 +106,9 @@ public class Product {
     }
 
     public Long getId() { return id; }
+
+    public Store getStore() { return store; }
+    public void setStore(Store store) { this.store = store; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

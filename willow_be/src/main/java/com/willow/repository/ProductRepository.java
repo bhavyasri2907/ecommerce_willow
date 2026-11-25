@@ -15,31 +15,17 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
-    List<Product> findByType(ProductType type);
-
+    // Storefront: every store's products.
     List<Product> findByStatus(ProductStatus status);
-
     List<Product> findByTypeAndStatus(ProductType type, ProductStatus status);
 
-    List<Product> findByStatusNot(ProductStatus status);
+    // Seller dashboard: one store's products.
+    List<Product> findByStoreIdAndStatus(Long storeId, ProductStatus status);
+    List<Product> findByStoreIdAndStatusNot(Long storeId, ProductStatus status);
+    Optional<Product> findByIdAndStoreId(Long id, Long storeId);
 
-    long countByStatus(ProductStatus status);
-
-    long countByType(ProductType type);
-
-    long countByStockAndStatusNot(int stock, ProductStatus status);
-
-    long countByStockBetweenAndStatusNot(int min, int max, ProductStatus status);
-
-    long countByTypeAndStatus(ProductType type, ProductStatus status);
-
-    long countByTypeAndStockAndStatusNot(ProductType type, int stock, ProductStatus status);
-
-    long countByTypeAndStockBetweenAndStatusNot(ProductType type, int min, int max, ProductStatus status);
-
-    boolean existsBySkuIgnoreCase(String sku);
-
-    boolean existsBySkuIgnoreCaseAndIdNot(String sku, Long id);
+    boolean existsByStoreIdAndSkuIgnoreCase(Long storeId, String sku);
+    boolean existsByStoreIdAndSkuIgnoreCaseAndIdNot(Long storeId, String sku, Long id);
 
     /** Row lock used whenever stock is changed, so concurrent orders cannot oversell. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)

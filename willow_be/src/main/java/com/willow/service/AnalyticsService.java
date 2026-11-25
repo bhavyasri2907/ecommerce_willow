@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Sales reporting. Revenue, units and customers only count orders that were not
+ * Sales reporting for one store. Revenue, units and customers only count orders that were not
  * cancelled or returned; status and payment breakdowns count every order.
  */
 @Service
@@ -33,14 +33,14 @@ public class AnalyticsService {
     }
 
     @Transactional(readOnly = true)
-    public AnalyticsDto report(int rangeDays) {
+    public AnalyticsDto report(Long storeId, int rangeDays) {
         int days = Math.max(1, Math.min(rangeDays, 365));
         LocalDate today = LocalDate.now(zone);
         LocalDate from = today.minusDays(days - 1L);
         Instant currentStart = from.atStartOfDay(zone).toInstant();
         Instant previousStart = from.minusDays(days).atStartOfDay(zone).toInstant();
 
-        List<Order> all = orderRepository.findWithItemsSince(previousStart);
+        List<Order> all = orderRepository.findWithItemsSince(storeId, previousStart);
         List<Order> current = all.stream().filter(o -> !o.getCreatedAt().isBefore(currentStart)).toList();
         List<Order> previous = all.stream().filter(o -> o.getCreatedAt().isBefore(currentStart)).toList();
         List<Order> currentValid = current.stream().filter(o -> !o.getStatus().isVoid()).toList();

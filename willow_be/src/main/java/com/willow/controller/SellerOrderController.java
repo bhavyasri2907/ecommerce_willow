@@ -1,5 +1,6 @@
 package com.willow.controller;
 
+import com.willow.security.SellerContext;
 import com.willow.dto.response.OrderDto;
 import com.willow.dto.response.PageResponse;
 import com.willow.dto.request.StatusRequest;
@@ -16,9 +17,11 @@ import java.util.Map;
 public class SellerOrderController {
 
     private final OrderService orderService;
+    private final SellerContext seller;
 
-    public SellerOrderController(OrderService orderService) {
+    public SellerOrderController(OrderService orderService, SellerContext seller) {
         this.orderService = orderService;
+        this.seller = seller;
     }
 
     // GET /api/seller/orders?q=&status=PENDING&page=0&size=10&sort=createdAt&dir=desc
@@ -29,22 +32,22 @@ public class SellerOrderController {
                                          @RequestParam(defaultValue = "10") int size,
                                          @RequestParam(defaultValue = "createdAt") String sort,
                                          @RequestParam(defaultValue = "desc") String dir) {
-        return orderService.search(q, status, Math.max(page, 0), Math.clamp(size, 1, 100),
+        return orderService.search(seller.storeId(), q, status, Math.max(page, 0), Math.clamp(size, 1, 100),
                 sort, Sort.Direction.fromOptionalString(dir).orElse(Sort.Direction.DESC));
     }
 
     @GetMapping("/counts")
     public Map<String, Long> counts() {
-        return orderService.counts();
+        return orderService.counts(seller.storeId());
     }
 
     @GetMapping("/{id}")
     public OrderDto get(@PathVariable Long id) {
-        return orderService.get(id);
+        return orderService.get(seller.storeId(), id);
     }
 
     @PatchMapping("/{id}/status")
     public OrderDto updateStatus(@PathVariable Long id, @Valid @RequestBody StatusRequest req) {
-        return orderService.updateStatus(id, OrderStatus.valueOf(req.status().toUpperCase()));
+        return orderService.updateStatus(seller.storeId(), id, OrderStatus.valueOf(req.status().toUpperCase()));
     }
 }

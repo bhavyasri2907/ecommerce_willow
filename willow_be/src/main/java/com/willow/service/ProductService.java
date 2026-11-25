@@ -1,17 +1,17 @@
 package com.willow.service;
 
 import com.willow.dto.response.ProductDto;
-import com.willow.exception.NotFoundException;
 import com.willow.entity.Product;
 import com.willow.entity.ProductStatus;
 import com.willow.entity.ProductType;
+import com.willow.exception.NotFoundException;
 import com.willow.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** Storefront (public) product reads. Only LIVE products are listed to shoppers. */
+/** Storefront (public) product reads across every store. Only LIVE products are shown to shoppers. */
 @Service
 public class ProductService {
 
@@ -21,12 +21,19 @@ public class ProductService {
         this.productRepository = productRepository;
     }
 
+    /**
+     * @param type    limit to one category; null for all
+     * @param storeId limit to one seller's store; null for the whole marketplace
+     */
     @Transactional(readOnly = true)
-    public List<ProductDto> findAll(ProductType type) {
+    public List<ProductDto> findAll(ProductType type, Long storeId) {
         List<Product> products = (type == null)
                 ? productRepository.findByStatus(ProductStatus.LIVE)
                 : productRepository.findByTypeAndStatus(type, ProductStatus.LIVE);
-        return products.stream().map(ProductDto::from).toList();
+        return products.stream()
+                .filter(p -> storeId == null || p.getStore().getId().equals(storeId))
+                .map(ProductDto::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)

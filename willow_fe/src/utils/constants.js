@@ -1,6 +1,9 @@
 /** Base URL of the willow_be API. Override with VITE_API_URL in .env. */
 export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
+/** Where sellers sign up and manage their store (willow_dashboard). Override with VITE_SELLER_URL in .env. */
+export const SELLER_PANEL_URL = import.meta.env.VITE_SELLER_URL || 'http://localhost:5174';
+
 /**
  * Collection pages: each entry becomes a route rendered by pages/Products.jsx.
  * The icon filters for each page live in features/products/categoryFilters.js.

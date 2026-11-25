@@ -1,9 +1,11 @@
 import { formatPrice } from '../../../utils/formatPrice.js';
 
 /** Order summary for the selected items, with the Place Order button. */
-export default function PriceDetails({ totals, policies, onPlaceOrder }) {
-  const { units, mrp, discount, shipping, total } = totals;
+export default function PriceDetails({ totals, onPlaceOrder }) {
+  const { units, mrp, discount, shipping, sellers, total } = totals;
   const nothingSelected = units === 0;
+  // Stores still charging shipping: a little more from them would make it free.
+  const charging = sellers.filter((s) => s.shipping > 0);
 
   return (
     <aside className="price-details" aria-label="Price details">
@@ -28,10 +30,14 @@ export default function PriceDetails({ totals, policies, onPlaceOrder }) {
         </div>
       </dl>
 
-      {policies && shipping > 0 && (
-        <p className="price-details__hint">
-          Add {formatPrice(Number(policies.freeShippingThreshold) - totals.subtotal)} more for free shipping.
+      {charging.map((s) => (
+        <p className="price-details__hint" key={s.storeId}>
+          Add {formatPrice(s.freeShippingThreshold - s.subtotal)} more from {s.storeName} for free shipping
+          {sellers.length > 1 ? ' on its items' : ''}.
         </p>
+      ))}
+      {sellers.length > 1 && (
+        <p className="price-details__hint">Your bag has items from {sellers.length} sellers; each ships separately.</p>
       )}
 
       <div className="price-details__total">

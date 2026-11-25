@@ -13,7 +13,8 @@ public class LiveEventPublisher {
         this.publisher = publisher;
     }
 
-    public void publish(String type, Object payload) {
-        publisher.publishEvent(LiveEvent.of(type, payload));
+    /** Tells the dashboards of one store that something of theirs changed. */
+    public void publish(Long storeId, String type, Object payload) {
+        publisher.publishEvent(LiveEvent.of(storeId, type, payload));
     }
 }

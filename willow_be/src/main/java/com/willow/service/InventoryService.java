@@ -1,12 +1,16 @@
 package com.willow.service;
 
-import com.willow.mapper.ProductMapper;
-import com.willow.dto.request.*;
-import com.willow.dto.response.*;
+import com.willow.dto.request.StockAdjustmentRequest;
+import com.willow.dto.response.InventoryItemDto;
+import com.willow.dto.response.InventorySummaryDto;
+import com.willow.dto.response.ProductDto;
+import com.willow.dto.response.ProductSales;
+import com.willow.dto.response.StockMovementDto;
+import com.willow.entity.*;
 import com.willow.event.LiveEvent;
 import com.willow.event.LiveEventPublisher;
 import com.willow.exception.NotFoundException;
-import com.willow.entity.*;
+import com.willow.mapper.ProductMapper;
 import com.willow.repository.ProductRepository;
 import com.willow.repository.StockMovementRepository;
 import org.springframework.data.domain.PageRequest;
@@ -20,7 +24,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-/** Stock levels, sales velocity and the stock movement ledger. */
+/** One store's stock levels, sales velocity and stock movement ledger. */
 @Service
 public class InventoryService {
 
@@ -45,16 +49,16 @@ public class InventoryService {
     }
 
     /**
-     * Inventory rows for every non-archived product, most urgent first.
+     * Inventory rows for every non-archived product of the store, most urgent first.
      *
      * @param filter "low", "out", "healthy" or null for all
      */
     @Transactional(readOnly = true)
-    public List<InventoryItemDto> list(String query, ProductType type, String filter) {
+    public List<InventoryItemDto> list(Long storeId, String query, ProductType type, String filter) {
         Map<Long, ProductSales> recent = mapper.salesSince(Instant.now().minus(Duration.ofDays(VELOCITY_WINDOW_DAYS)));
         String q = query == null ? "" : query.trim().toLowerCase();
 
-        return mapper.toDtos(productRepository.findByStatusNot(ProductStatus.ARCHIVED)).stream()
+        return mapper.toDtos(productRepository.findByStoreIdAndStatusNot(storeId, ProductStatus.ARCHIVED)).stream()
                 .filter(p -> type == null || p.type().equals(type.name()))
                 .filter(p -> q.isEmpty() || p.name().toLowerCase().contains(q)
                         || (p.sku() != null && p.sku().toLowerCase().contains(q)))
@@ -68,9 +72,9 @@ public class InventoryService {
     }
 
     @Transactional(readOnly = true)
-    public InventorySummaryDto summary() {
-        int threshold = storeService.lowStockThreshold();
-        List<Product> products = productRepository.findByStatusNot(ProductStatus.ARCHIVED);
+    public InventorySummaryDto summary(Long storeId) {
+        int threshold = storeService.lowStockThreshold(storeId);
+        List<Product> products = productRepository.findByStoreIdAndStatusNot(storeId, ProductStatus.ARCHIVED);
         long units = 0;
         long low = 0;
         long out = 0;
@@ -85,32 +89,34 @@ public class InventoryService {
     }
 
     @Transactional
-    public InventoryItemDto adjust(Long productId, StockAdjustmentRequest req) {
+    public InventoryItemDto adjust(Long storeId, Long productId, StockAdjustmentRequest req) {
         if (req.quantityChange() == 0) throw new IllegalArgumentException("Quantity change cannot be zero");
         if (req.reason() == StockMovementReason.SALE || req.reason() == StockMovementReason.INITIAL) {
             throw new IllegalArgumentException("Reason " + req.reason() + " is recorded automatically");
         }
         Product p = productRepository.findByIdForUpdate(productId)
+                .filter(product -> product.getStore().getId().equals(storeId))
                 .orElseThrow(() -> new NotFoundException("product", productId));
         changeStock(p, req.quantityChange(), req.reason(), req.note());
+        events.publish(storeId, LiveEvent.INVENTORY_CHANGED, Map.of("productIds", List.of(productId)));
 
-        events.publish(LiveEvent.INVENTORY_CHANGED, Map.of("productIds", List.of(productId)));
         Map<Long, ProductSales> recent = mapper.salesSince(Instant.now().minus(Duration.ofDays(VELOCITY_WINDOW_DAYS)));
         return toItem(mapper.toDto(p), recent.getOrDefault(productId, ProductSales.NONE));
     }
 
+    /** The store's latest stock changes, optionally for one of its products. */
     @Transactional(readOnly = true)
-    public List<StockMovementDto> movements(Long productId, int limit) {
+    public List<StockMovementDto> movements(Long storeId, Long productId, int limit) {
         PageRequest page = PageRequest.of(0, Math.max(1, Math.min(limit, 200)));
         List<StockMovement> rows = productId == null
-                ? movementRepository.findAllByOrderByCreatedAtDescIdDesc(page)
-                : movementRepository.findByProductIdOrderByCreatedAtDescIdDesc(productId, page);
+                ? movementRepository.findByProductStoreIdOrderByCreatedAtDescIdDesc(storeId, page)
+                : movementRepository.findByProductIdAndProductStoreIdOrderByCreatedAtDescIdDesc(productId, storeId, page);
         return rows.stream().map(StockMovementDto::from).toList();
     }
 
     /**
      * Applies a stock change to an already-locked product and records it in the ledger.
-     * Publishes {@code inventory.low} when the change takes the product into low or zero stock.
+     * Tells the product's store with {@code inventory.low} when the change takes it into low or zero stock.
      */
     @Transactional
     public void changeStock(Product p, int change, StockMovementReason reason, String note) {
@@ -122,11 +128,12 @@ public class InventoryService {
         p.setStock(after);
         movementRepository.save(new StockMovement(p, change, reason, note));
 
-        int threshold = storeService.lowStockThreshold();
+        Long storeId = p.getStore().getId();
+        int threshold = storeService.lowStockThreshold(storeId);
         boolean becameLow = before > threshold && after <= threshold;
         boolean soldOut = before > 0 && after == 0;
         if (becameLow || soldOut) {
-            events.publish(LiveEvent.INVENTORY_LOW, Map.of(
+            events.publish(storeId, LiveEvent.INVENTORY_LOW, Map.of(
                     "productId", p.getId(), "name", p.getName(), "stock", after, "threshold", threshold));
         }
     }

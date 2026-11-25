@@ -1,5 +1,6 @@
 package com.willow.security;
 
+import com.willow.entity.Seller;
 import com.willow.service.SellerAuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -10,7 +11,8 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Requires a signed-in seller for everything under /api/seller, except /api/seller/auth.
+ * Requires a signed-in seller for everything under /api/seller, except /api/seller/auth,
+ * and records which store that seller manages (read back through {@link SellerContext}).
  * The token normally arrives as {@code Authorization: Bearer <token>}; the live-events
  * stream also accepts {@code ?token=} because browsers' EventSource cannot send headers.
  */
@@ -42,7 +44,8 @@ public class SellerAuthInterceptor implements HandlerInterceptor, WebMvcConfigur
             String param = request.getParameter("token");
             token = param == null || param.isBlank() ? null : param;
         }
-        authService.requireSeller(token); // throws UnauthorizedException -> 401
+        Seller seller = authService.requireSeller(token); // throws UnauthorizedException -> 401
+        request.setAttribute(SellerContext.STORE_ID, seller.getStore().getId());
         return true;
     }
 }

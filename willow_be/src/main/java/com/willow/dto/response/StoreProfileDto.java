@@ -1,6 +1,6 @@
 package com.willow.dto.response;
 
-import com.willow.entity.StoreProfile;
+import com.willow.entity.Store;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,7 +25,7 @@ public record StoreProfileDto(
         @Size(max = 60) String instagram,
         Instant updatedAt
 ) {
-    public static StoreProfileDto from(StoreProfile s) {
+    public static StoreProfileDto from(Store s) {
         return new StoreProfileDto(s.getStoreName(), s.getTagline(), s.getDescription(), s.getOwnerName(),
                 s.getContactEmail(), s.getContactPhone(), s.getAddressLine(), s.getCity(), s.getState(),
                 s.getPincode(), s.getGstin(), s.getLogoUrl(), s.getWebsite(), s.getInstagram(), s.getUpdatedAt());

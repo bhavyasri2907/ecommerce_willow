@@ -9,22 +9,28 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
 
-    long countByStatus(OrderStatus status);
+    Optional<Order> findByIdAndStoreId(Long id, Long storeId);
 
+    long countByStoreId(Long storeId);
+
+    long countByStoreIdAndStatus(Long storeId, OrderStatus status);
+
+    List<Order> findByStoreIdAndStatusIn(Long storeId, List<OrderStatus> statuses);
+
+    /** Order numbers are one sequence across the whole marketplace. */
     @Query("select max(o.orderNumber) from Order o")
     String findMaxOrderNumber();
 
-    /** All orders since the given instant, with items and products fetched in one go for analytics. */
+    /** One store's orders since the given instant, with items and products fetched in one go for analytics. */
     @Query("""
             select distinct o from Order o
             left join fetch o.items i
             left join fetch i.product
-            where o.createdAt >= :from
+            where o.store.id = :storeId and o.createdAt >= :from
             """)
-    List<Order> findWithItemsSince(@Param("from") Instant from);
-
-    List<Order> findByStatusIn(List<OrderStatus> statuses);
+    List<Order> findWithItemsSince(@Param("storeId") Long storeId, @Param("from") Instant from);
 }

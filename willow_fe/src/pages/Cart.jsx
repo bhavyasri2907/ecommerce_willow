@@ -11,12 +11,12 @@ import { cartTotals, isOutOfStock } from '../features/cart/cartTotals.js';
 export default function Cart() {
   const navigate = useNavigate();
   const { items, setQty, setSize, removeItems, addToWishlist } = useCart();
-  const policies = useStorePolicies();
-
   // Everything is selected by default, so only the items the shopper unticks are tracked.
   const [unselected, setUnselected] = useState(new Set());
 
   const entries = Object.values(items);
+  // Each seller sets their own shipping fee and return window.
+  const policies = useStorePolicies(entries.map((e) => e.product.storeId).filter(Boolean));
   const selectable = entries.filter((e) => !isOutOfStock(e.product));
   const selected = selectable.filter((e) => !unselected.has(e.product.id));
   const selectedIds = selected.map((e) => e.product.id);
@@ -94,7 +94,7 @@ export default function Cart() {
               onSizeChange={setSize}
               onQtyChange={setQty}
               onRemove={removeItems}
-              returnWindowDays={policies?.returnWindowDays}
+              returnWindowDays={policies[entry.product.storeId]?.returnWindowDays}
             />
           ))}
 
@@ -105,7 +105,7 @@ export default function Cart() {
           </Link>
         </section>
 
-        <PriceDetails totals={totals} policies={policies} onPlaceOrder={placeOrder} />
+        <PriceDetails totals={totals} onPlaceOrder={placeOrder} />
       </div>
     </div>
   );

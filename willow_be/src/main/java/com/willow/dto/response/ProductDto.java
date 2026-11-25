@@ -12,6 +12,7 @@ import java.util.List;
  * Product as returned by the API. The first eight fields are the original
  * storefront contract and must stay stable. {@code imageUrl} is the cover photo and
  * {@code images} the full gallery; {@code brand} may be null (show the store name).
+ * {@code storeId} / {@code storeName} say which seller lists it.
  */
 public record ProductDto(
         Long id,
@@ -39,7 +40,9 @@ public record ProductDto(
         String genderLabel,
         String brand,
         String material,
-        List<String> images
+        List<String> images,
+        Long storeId,
+        String storeName
 ) {
     public static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
 
@@ -58,7 +61,8 @@ public record ProductDto(
                 sales.units(), sales.revenue(),
                 p.getCreatedAt(), p.getUpdatedAt(),
                 p.getGender().name(), p.getGender().getLabel(), p.getBrand(), p.getMaterial(),
-                List.copyOf(p.getImages())
+                List.copyOf(p.getImages()),
+                p.getStore().getId(), p.getStore().getStoreName()
         );
     }
 

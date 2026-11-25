@@ -3,10 +3,10 @@ package com.willow.service;
 import com.willow.dto.request.CreateOrderRequest;
 import com.willow.dto.response.OrderDto;
 import com.willow.dto.response.PageResponse;
+import com.willow.entity.*;
 import com.willow.event.LiveEvent;
 import com.willow.event.LiveEventPublisher;
 import com.willow.exception.NotFoundException;
-import com.willow.entity.*;
 import com.willow.repository.OrderRepository;
 import com.willow.repository.ProductRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -20,7 +20,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.*;
 
-/** Order placement (storefront) and fulfilment (seller dashboard). */
+/**
+ * Order placement (storefront) and fulfilment (seller dashboard). Each order belongs to
+ * one store; the seller-side methods take the seller's store id and only see its orders.
+ */
 @Service
 public class OrderService {
 
@@ -47,11 +50,12 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<OrderDto> search(String query, OrderStatus status, int page, int size,
+    public PageResponse<OrderDto> search(Long storeId, String query, OrderStatus status, int page, int size,
                                          String sort, Sort.Direction direction) {
         String sortField = SORTABLE.contains(sort) ? sort : "createdAt";
         Specification<Order> spec = (root, cq, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("store").get("id"), storeId));
             if (status != null) predicates.add(cb.equal(root.get("status"), status));
             if (query != null && !query.isBlank()) {
                 String like = "%" + query.trim().toLowerCase() + "%";
@@ -68,31 +72,57 @@ public class OrderService {
         return PageResponse.of(result, OrderDto::from);
     }
 
-    /** Order count per status, plus "ALL". */
+    /** The store's order count per status, plus "ALL". */
     @Transactional(readOnly = true)
-    public Map<String, Long> counts() {
+    public Map<String, Long> counts(Long storeId) {
         Map<String, Long> counts = new LinkedHashMap<>();
-        counts.put("ALL", orderRepository.count());
+        counts.put("ALL", orderRepository.countByStoreId(storeId));
         for (OrderStatus s : OrderStatus.values()) {
-            counts.put(s.name(), orderRepository.countByStatus(s));
+            counts.put(s.name(), orderRepository.countByStoreIdAndStatus(storeId, s));
         }
         return counts;
     }
 
     @Transactional(readOnly = true)
-    public OrderDto get(Long id) {
-        return OrderDto.from(find(id));
+    public OrderDto get(Long storeId, Long id) {
+        return OrderDto.from(find(storeId, id));
     }
 
     /**
-     * Places an order: locks each product (in id order, to avoid deadlocks), checks it is live
-     * and in stock, takes the stock, and prices the order with the seller's shipping rules.
+     * Places a shopper's bag as one order per store it draws from. Each product is locked
+     * (in id order, to avoid deadlocks), checked to be live and in stock, and its stock is
+     * taken; each order is priced with its own store's shipping rules. Either every order
+     * is created or, if any item is unavailable, none are.
      */
     @Transactional
-    public OrderDto place(CreateOrderRequest req) {
-        SellerSettings settings = storeService.settings();
+    public List<OrderDto> place(CreateOrderRequest req) {
+        List<CreateOrderRequest.Line> lines = new ArrayList<>(req.items());
+        lines.sort(Comparator.comparing(CreateOrderRequest.Line::productId));
+
+        // Lock and check everything first, grouping the lines by the store that sells them.
+        Map<Long, List<CreateOrderRequest.Line>> linesByStore = new LinkedHashMap<>();
+        Map<Long, Product> products = new HashMap<>();
+        for (CreateOrderRequest.Line line : lines) {
+            Product p = productRepository.findByIdForUpdate(line.productId())
+                    .orElseThrow(() -> new NotFoundException("product", line.productId()));
+            if (p.getStatus() != ProductStatus.LIVE) {
+                throw new IllegalStateException("\"" + p.getName() + "\" is not available for sale");
+            }
+            products.put(p.getId(), p);
+            linesByStore.computeIfAbsent(p.getStore().getId(), id -> new ArrayList<>()).add(line);
+        }
+
+        List<OrderDto> placed = new ArrayList<>();
+        linesByStore.forEach((storeId, storeLines) -> placed.add(placeForStore(storeId, storeLines, products, req)));
+        return placed;
+    }
+
+    private OrderDto placeForStore(Long storeId, List<CreateOrderRequest.Line> lines,
+                                   Map<Long, Product> products, CreateOrderRequest req) {
+        SellerSettings settings = storeService.settings(storeId);
 
         Order order = new Order();
+        order.setStore(storeService.store(storeId));
         order.setOrderNumber(nextOrderNumber());
         order.setCustomerName(req.customerName().trim());
         order.setCustomerEmail(req.customerEmail().trim().toLowerCase());
@@ -102,16 +132,9 @@ public class OrderService {
         order.setPaymentMethod(req.paymentMethod());
         order.setStatus(settings.isAutoConfirmOrders() ? OrderStatus.CONFIRMED : OrderStatus.PENDING);
 
-        List<CreateOrderRequest.Line> lines = new ArrayList<>(req.items());
-        lines.sort(Comparator.comparing(CreateOrderRequest.Line::productId));
-
         Set<Long> touched = new LinkedHashSet<>();
         for (CreateOrderRequest.Line line : lines) {
-            Product p = productRepository.findByIdForUpdate(line.productId())
-                    .orElseThrow(() -> new NotFoundException("product", line.productId()));
-            if (p.getStatus() != ProductStatus.LIVE) {
-                throw new IllegalStateException("\"" + p.getName() + "\" is not available for sale");
-            }
+            Product p = products.get(line.productId());
             if (p.getStock() < line.quantity()) {
                 throw new IllegalStateException(p.getStock() == 0
                         ? "\"" + p.getName() + "\" is out of stock"
@@ -130,15 +153,15 @@ public class OrderService {
         order.setTotal(subtotal.add(shipping));
 
         OrderDto dto = OrderDto.from(orderRepository.saveAndFlush(order));
-        events.publish(LiveEvent.ORDER_CREATED, dto);
-        events.publish(LiveEvent.INVENTORY_CHANGED, Map.of("productIds", touched));
+        events.publish(storeId, LiveEvent.ORDER_CREATED, dto);
+        events.publish(storeId, LiveEvent.INVENTORY_CHANGED, Map.of("productIds", touched));
         return dto;
     }
 
-    /** Moves an order along its workflow. Cancelling or returning puts the stock back. */
+    /** Moves one of the store's orders along its workflow. Cancelling or returning puts the stock back. */
     @Transactional
-    public OrderDto updateStatus(Long id, OrderStatus target) {
-        Order order = find(id);
+    public OrderDto updateStatus(Long storeId, Long id, OrderStatus target) {
+        Order order = find(storeId, id);
         OrderStatus current = order.getStatus();
         if (current == target) return OrderDto.from(order);
         if (!current.canMoveTo(target)) {
@@ -157,20 +180,21 @@ public class OrderService {
                         inventoryService.changeStock(p, item.getQuantity(), reason, "Order " + order.getOrderNumber());
                         touched.add(p.getId());
                     });
-            events.publish(LiveEvent.INVENTORY_CHANGED, Map.of("productIds", touched));
+            events.publish(storeId, LiveEvent.INVENTORY_CHANGED, Map.of("productIds", touched));
         }
 
         order.setStatus(target);
         OrderDto dto = OrderDto.from(orderRepository.saveAndFlush(order));
-        events.publish(LiveEvent.ORDER_UPDATED, dto);
+        events.publish(storeId, LiveEvent.ORDER_UPDATED, dto);
         return dto;
     }
 
-    private Order find(Long id) {
-        return orderRepository.findById(id).orElseThrow(() -> new NotFoundException("order", id));
+    /** The store's own order, or 404 - an order of another store looks exactly like a missing one. */
+    private Order find(Long storeId, Long id) {
+        return orderRepository.findByIdAndStoreId(id, storeId).orElseThrow(() -> new NotFoundException("order", id));
     }
 
-    /** Sequential, human-friendly order numbers: WL-100001, WL-100002, ... */
+    /** Sequential, human-friendly order numbers shared by the whole marketplace: WL-100001, WL-100002, ... */
     private synchronized String nextOrderNumber() {
         if (lastOrderNumber < 0) {
             String max = orderRepository.findMaxOrderNumber();

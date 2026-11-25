@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 
 import java.time.Instant;
 
-/** Someone who may sign in to the seller dashboard. */
+/** Someone who may sign in to the seller dashboard, and the store they manage. */
 @Entity
 @Table(name = "sellers")
 public class Seller {
@@ -12,6 +12,10 @@ public class Seller {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "store_id", nullable = false, updatable = false)
+    private Store store;
 
     @Column(nullable = false, length = 120)
     private String fullName;
@@ -44,6 +48,9 @@ public class Seller {
     }
 
     public Long getId() { return id; }
+
+    public Store getStore() { return store; }
+    public void setStore(Store store) { this.store = store; }
 
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }

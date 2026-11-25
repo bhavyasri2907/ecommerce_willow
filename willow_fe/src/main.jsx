@@ -8,6 +8,7 @@ import './styles/global.css';
 import './styles/account.css';
 import './styles/wishlist.css';
 import './styles/cart.css';
+import './styles/product.css';
 import './styles/auth.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

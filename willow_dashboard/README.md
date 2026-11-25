@@ -15,8 +15,9 @@ npm run dev
 
 Open http://localhost:5174. The storefront (`willow_fe`) keeps running on 5173.
 
-The panel needs a signed-in seller. The first visit shows **Set up your store** (store name, your name,
-email, password), which creates the store's one seller account; after that it shows **Sign in**.
+The panel needs a signed-in seller. Willow is a marketplace: **Open your store** (store name, your name,
+email, password) creates a new store and its seller account; **Sign in** returns to it. Every page shows
+only that seller's own products, stock, orders and settings.
 
 To point at a different API, copy `.env.example` to `.env` and set `VITE_API_URL`.
 
@@ -34,7 +35,7 @@ willow_dashboard/
 │   ├── pages/              one file per route, kept thin: fetch data, compose components
 │   │                       Overview, Products, AddProduct, EditProduct, CuratedPicks,
 │   │                       Inventory, Orders, Analytics, StoreProfile, Settings, NotFound,
-│   │                       Login (sign-in and store set-up)
+│   │                       Login (sign-in and sign-up)
 │   ├── components/
 │   │   ├── layout/         DashboardLayout, Sidebar, Topbar, LiveNotifications, RequireAuth
 │   │   ├── overview/       StatCard, RevenueCard, NeedsAttention, RecentOrders,

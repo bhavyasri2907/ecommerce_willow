@@ -4,40 +4,73 @@ import com.willow.dto.response.SellerSettingsDto;
 import com.willow.dto.response.StoreInfoDto;
 import com.willow.dto.response.StorePoliciesDto;
 import com.willow.dto.response.StoreProfileDto;
+import com.willow.entity.SellerSettings;
+import com.willow.entity.Store;
 import com.willow.event.LiveEvent;
 import com.willow.event.LiveEventPublisher;
-import com.willow.entity.SellerSettings;
-import com.willow.entity.StoreProfile;
+import com.willow.exception.NotFoundException;
 import com.willow.repository.SellerSettingsRepository;
-import com.willow.repository.StoreProfileRepository;
+import com.willow.repository.StoreRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Store profile and seller settings. Both are single-row tables created on first access. */
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/** Stores and their settings. Every method works on one store, named by its id. */
 @Service
 public class StoreService {
 
-    private final StoreProfileRepository profileRepository;
+    private static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
+
+    private final StoreRepository storeRepository;
     private final SellerSettingsRepository settingsRepository;
     private final LiveEventPublisher events;
 
-    public StoreService(StoreProfileRepository profileRepository,
+    public StoreService(StoreRepository storeRepository,
                         SellerSettingsRepository settingsRepository,
                         LiveEventPublisher events) {
-        this.profileRepository = profileRepository;
+        this.storeRepository = storeRepository;
         this.settingsRepository = settingsRepository;
         this.events = events;
     }
 
+    /** Opens a new store with default settings. Called when a seller signs up. */
     @Transactional
-    public StoreProfileDto getProfile() {
-        return StoreProfileDto.from(profileEntity());
+    public Store createStore(String storeName, String ownerName, String email, String phone) {
+        String name = storeName.trim();
+        if (storeRepository.existsByStoreNameIgnoreCase(name)) {
+            throw new IllegalStateException("A store called \"" + name + "\" already exists. Choose another name.");
+        }
+        Store store = new Store();
+        store.setStoreName(name);
+        store.setOwnerName(ownerName);
+        store.setContactEmail(email);
+        store.setContactPhone(phone);
+        storeRepository.saveAndFlush(store);
+        settingsRepository.save(new SellerSettings(store.getId()));
+        return store;
+    }
+
+    public Store store(Long storeId) {
+        return storeRepository.findById(storeId).orElseThrow(() -> new NotFoundException("store", storeId));
+    }
+
+    @Transactional(readOnly = true)
+    public StoreProfileDto getProfile(Long storeId) {
+        return StoreProfileDto.from(store(storeId));
     }
 
     @Transactional
-    public StoreProfileDto updateProfile(StoreProfileDto req) {
-        StoreProfile s = profileEntity();
-        s.setStoreName(req.storeName().trim());
+    public StoreProfileDto updateProfile(Long storeId, StoreProfileDto req) {
+        Store s = store(storeId);
+        String name = req.storeName().trim();
+        if (storeRepository.existsByStoreNameIgnoreCaseAndIdNot(name, storeId)) {
+            throw new IllegalStateException("A store called \"" + name + "\" already exists. Choose another name.");
+        }
+        s.setStoreName(name);
         s.setTagline(blankToNull(req.tagline()));
         s.setDescription(blankToNull(req.description()));
         s.setOwnerName(blankToNull(req.ownerName()));
@@ -51,30 +84,19 @@ public class StoreService {
         s.setLogoUrl(blankToNull(req.logoUrl()));
         s.setWebsite(blankToNull(req.website()));
         s.setInstagram(blankToNull(req.instagram()));
-        StoreProfileDto dto = StoreProfileDto.from(profileRepository.saveAndFlush(s));
-        events.publish(LiveEvent.STORE_UPDATED, dto);
+        StoreProfileDto dto = StoreProfileDto.from(storeRepository.saveAndFlush(s));
+        events.publish(storeId, LiveEvent.STORE_UPDATED, dto);
         return dto;
     }
 
-    /** Called when the seller signs up: names the store and records its owner's contact details. */
     @Transactional
-    public void setUpStore(String storeName, String ownerName, String email, String phone) {
-        StoreProfile s = profileEntity();
-        s.setStoreName(storeName);
-        s.setOwnerName(ownerName);
-        s.setContactEmail(email);
-        s.setContactPhone(phone);
-        events.publish(LiveEvent.STORE_UPDATED, StoreProfileDto.from(profileRepository.saveAndFlush(s)));
+    public SellerSettingsDto getSettings(Long storeId) {
+        return SellerSettingsDto.from(settings(storeId));
     }
 
     @Transactional
-    public SellerSettingsDto getSettings() {
-        return SellerSettingsDto.from(settings());
-    }
-
-    @Transactional
-    public SellerSettingsDto updateSettings(SellerSettingsDto req) {
-        SellerSettings s = settings();
+    public SellerSettingsDto updateSettings(Long storeId, SellerSettingsDto req) {
+        SellerSettings s = settings(storeId);
         s.setLowStockThreshold(req.lowStockThreshold());
         s.setAutoConfirmOrders(req.autoConfirmOrders());
         s.setOrderNotifications(req.orderNotifications());
@@ -84,42 +106,52 @@ public class StoreService {
         s.setFreeShippingThreshold(req.freeShippingThreshold());
         s.setSimulateLiveOrders(req.simulateLiveOrders());
         SellerSettingsDto dto = SellerSettingsDto.from(settingsRepository.saveAndFlush(s));
-        events.publish(LiveEvent.SETTINGS_UPDATED, dto);
+        events.publish(storeId, LiveEvent.SETTINGS_UPDATED, dto);
         return dto;
     }
 
-    /** The store's name, tagline and logo, as shown to shoppers. */
+    /** A store's settings entity, for other services. Created with defaults if the row is missing. */
     @Transactional
-    public StoreInfoDto getPublicInfo() {
-        return StoreInfoDto.from(profileEntity());
-    }
-
-    /** Shipping charges and return window, as shown to shoppers. */
-    @Transactional
-    public StorePoliciesDto getPolicies() {
-        return StorePoliciesDto.from(settings());
-    }
-
-    /** Settings entity for internal use by other services. */
-    @Transactional
-    public SellerSettings settings() {
-        return settingsRepository.findById(SellerSettings.SINGLETON_ID)
-                .orElseGet(() -> settingsRepository.save(new SellerSettings()));
+    public SellerSettings settings(Long storeId) {
+        return settingsRepository.findById(storeId)
+                .orElseGet(() -> settingsRepository.save(new SellerSettings(storeId)));
     }
 
     @Transactional(readOnly = true)
-    public int lowStockThreshold() {
-        return settingsRepository.findById(SellerSettings.SINGLETON_ID)
+    public int lowStockThreshold(Long storeId) {
+        return settingsRepository.findById(storeId)
                 .map(SellerSettings::getLowStockThreshold)
-                .orElse(10);
+                .orElse(DEFAULT_LOW_STOCK_THRESHOLD);
     }
 
-    private StoreProfile profileEntity() {
-        return profileRepository.findById(StoreProfile.SINGLETON_ID).orElseGet(() -> {
-            StoreProfile s = new StoreProfile();
-            s.setStoreName("Willow");
-            return profileRepository.save(s);
-        });
+    /** Low-stock thresholds for several stores at once; stores without settings get the default. */
+    @Transactional(readOnly = true)
+    public Map<Long, Integer> lowStockThresholds(Collection<Long> storeIds) {
+        Map<Long, Integer> thresholds = new HashMap<>();
+        storeIds.forEach(id -> thresholds.put(id, DEFAULT_LOW_STOCK_THRESHOLD));
+        settingsRepository.findAllById(storeIds)
+                .forEach(s -> thresholds.put(s.getStoreId(), s.getLowStockThreshold()));
+        return thresholds;
+    }
+
+    /** Stores that have the developer order simulator switched on. */
+    @Transactional(readOnly = true)
+    public List<Long> storesSimulatingOrders() {
+        return settingsRepository.findBySimulateLiveOrdersTrue().stream().map(SellerSettings::getStoreId).toList();
+    }
+
+    /** A store's name, tagline and logo, as shown to shoppers. */
+    @Transactional(readOnly = true)
+    public StoreInfoDto getPublicInfo(Long storeId) {
+        return StoreInfoDto.from(store(storeId));
+    }
+
+    /** Shipping charges and return windows of the given stores, as shown to shoppers. Unknown ids are skipped. */
+    @Transactional
+    public List<StorePoliciesDto> getPolicies(Collection<Long> storeIds) {
+        return storeRepository.findAllById(storeIds).stream()
+                .map(store -> StorePoliciesDto.from(store, settings(store.getId())))
+                .toList();
     }
 
     private static String blankToNull(String s) {

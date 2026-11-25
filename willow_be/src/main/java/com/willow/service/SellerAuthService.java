@@ -6,6 +6,7 @@ import com.willow.dto.response.SellerAuthResponse;
 import com.willow.dto.response.SellerDto;
 import com.willow.entity.Seller;
 import com.willow.entity.SellerSession;
+import com.willow.entity.Store;
 import com.willow.exception.UnauthorizedException;
 import com.willow.repository.SellerRepository;
 import com.willow.repository.SellerSessionRepository;
@@ -19,8 +20,8 @@ import java.time.Instant;
 import java.util.Locale;
 
 /**
- * Seller dashboard accounts. Willow is a single store: the first sign-up creates the
- * owner and names the store, and after that sign-up is closed.
+ * Seller dashboard accounts. Willow is a marketplace: signing up opens a new store
+ * and creates the account that manages it. A seller only ever sees their own store.
  */
 @Service
 public class SellerAuthService {
@@ -43,26 +44,26 @@ public class SellerAuthService {
         this.dummyHash = passwordEncoder.encode(SessionTokens.generate());
     }
 
-    /** True once the store has its owner account; the dashboard then offers sign-in only. */
-    @Transactional(readOnly = true)
-    public boolean storeHasOwner() {
-        return sellers.count() > 0;
-    }
-
+    /** Opens the seller's store and creates their account, then signs them in. */
     @Transactional
     public SellerAuthResponse register(SellerRegisterRequest req) {
-        if (storeHasOwner()) {
-            throw new IllegalStateException("This store already has a seller account. Sign in instead.");
+        String email = normaliseEmail(req.email());
+        if (sellers.existsByEmail(email)) {
+            throw new IllegalStateException("A seller account with this email already exists. Try signing in.");
         }
+        String fullName = req.fullName().trim();
+        String phone = req.phone() == null || req.phone().isBlank() ? null : req.phone().trim();
+
+        Store store = storeService.createStore(req.storeName(), fullName, email, phone);
 
         Seller seller = new Seller();
-        seller.setFullName(req.fullName().trim());
-        seller.setEmail(normaliseEmail(req.email()));
-        seller.setPhone(req.phone() == null || req.phone().isBlank() ? null : req.phone().trim());
+        seller.setStore(store);
+        seller.setFullName(fullName);
+        seller.setEmail(email);
+        seller.setPhone(phone);
         seller.setPasswordHash(passwordEncoder.encode(req.password()));
         sellers.save(seller);
 
-        storeService.setUpStore(req.storeName().trim(), seller.getFullName(), seller.getEmail(), seller.getPhone());
         return openSession(seller);
     }
 
@@ -79,12 +80,15 @@ public class SellerAuthService {
     }
 
     /** The seller a token belongs to; 401 when the token is missing, unknown or expired. */
-    @Transactional
+    @Transactional(readOnly = true)
     public SellerDto currentSeller(String token) {
-        return SellerDto.from(requireSeller(token), storeService.getProfile().storeName());
+        return SellerDto.from(requireSeller(token));
     }
 
-    /** Throws 401 unless the token belongs to a live seller session. Guards every /api/seller call. */
+    /**
+     * Throws 401 unless the token belongs to a live seller session. Guards every /api/seller
+     * call; the returned seller's store decides whose data that call may touch.
+     */
     @Transactional(readOnly = true)
     public Seller requireSeller(String token) {
         if (token == null) throw new UnauthorizedException("Please sign in to the seller panel");
@@ -103,7 +107,7 @@ public class SellerAuthService {
     private SellerAuthResponse openSession(Seller seller) {
         String token = SessionTokens.generate();
         sessions.save(new SellerSession(seller, SessionTokens.hash(token), Instant.now().plus(SESSION_LIFETIME)));
-        return new SellerAuthResponse(token, SellerDto.from(seller, storeService.getProfile().storeName()));
+        return new SellerAuthResponse(token, SellerDto.from(seller));
     }
 
     private static String normaliseEmail(String email) {

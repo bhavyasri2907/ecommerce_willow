@@ -22,6 +22,11 @@ public class Order {
     @Column(nullable = false, unique = true, length = 20)
     private String orderNumber;
 
+    /** The store fulfilling this order; every item on it comes from that store. */
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "store_id", nullable = false, updatable = false)
+    private Store store;
+
     @Column(nullable = false)
     private String customerName;
 
@@ -73,6 +78,9 @@ public class Order {
     void onUpdate() {
         updatedAt = Instant.now();
     }
+
+    public Store getStore() { return store; }
+    public void setStore(Store store) { this.store = store; }
 
     public void addItem(OrderItem item) {
         item.setOrder(this);

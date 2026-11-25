@@ -12,11 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 /**
- * Seller dashboard sign-up, sign-in and sign-out. These are the only /api/seller
- * endpoints that work without a session; see SellerAuthInterceptor.
+ * Seller dashboard sign-up (opens a new store), sign-in and sign-out. These are the only
+ * /api/seller endpoints that work without a session; see SellerAuthInterceptor.
  */
 @RestController
 @RequestMapping("/api/seller/auth")
@@ -26,12 +24,6 @@ public class SellerAuthController {
 
     public SellerAuthController(SellerAuthService authService) {
         this.authService = authService;
-    }
-
-    /** Lets the dashboard open on "set up your store" the first time and on sign-in afterwards. */
-    @GetMapping("/status")
-    public Map<String, Boolean> status() {
-        return Map.of("registered", authService.storeHasOwner());
     }
 
     @PostMapping("/register")

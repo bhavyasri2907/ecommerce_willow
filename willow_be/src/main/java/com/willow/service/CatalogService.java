@@ -1,18 +1,24 @@
 package com.willow.service;
 
-import com.willow.mapper.ProductMapper;
-import com.willow.dto.request.*;
-import com.willow.dto.response.*;
+import com.willow.dto.request.BulkProductRequest;
+import com.willow.dto.request.ProductRequest;
+import com.willow.dto.response.BulkResult;
+import com.willow.dto.response.CatalogSummaryDto;
+import com.willow.dto.response.PageResponse;
+import com.willow.dto.response.ProductDto;
+import com.willow.entity.*;
 import com.willow.event.LiveEvent;
 import com.willow.event.LiveEventPublisher;
 import com.willow.exception.NotFoundException;
-import com.willow.entity.*;
+import com.willow.mapper.ProductMapper;
 import com.willow.repository.OrderItemRepository;
 import com.willow.repository.ProductRepository;
 import com.willow.repository.RecommendationRepository;
 import com.willow.repository.StockMovementRepository;
-import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
-/** Seller-side product management: search, create, edit, publish/archive and delete. */
+/**
+ * Seller-side product management: search, create, edit, publish/archive and delete.
+ * Every method takes the seller's store id and only ever sees that store's products.
+ */
 @Service
 public class CatalogService {
 
@@ -58,10 +67,11 @@ public class CatalogService {
      * @param sort  one of name, price, stock, createdAt, updatedAt, sold
      */
     @Transactional(readOnly = true)
-    public PageResponse<ProductDto> search(String query, ProductType type, ProductStatus status, String stock,
-                                           int page, int size, String sort, Sort.Direction direction) {
+    public PageResponse<ProductDto> search(Long storeId, String query, ProductType type, ProductStatus status,
+                                           String stock, int page, int size, String sort, Sort.Direction direction) {
         String sortField = SORTABLE.contains(sort) ? sort : "createdAt";
-        Specification<Product> spec = buildSpec(query, type, status, stock, storeService.lowStockThreshold());
+        Specification<Product> spec = inStore(storeId)
+                .and(matching(query, type, status, stock, storeService.lowStockThreshold(storeId)));
 
         if (!"sold".equals(sortField)) {
             Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortField).and(Sort.by("id")));
@@ -81,58 +91,59 @@ public class CatalogService {
         return new PageResponse<>(all.subList(from, to), page, size, all.size(), totalPages);
     }
 
-    /** Status and stock counts, optionally scoped to one category; byType always covers the whole catalogue. */
+    /** Status and stock counts, optionally scoped to one category; byType always covers the store's whole catalogue. */
     @Transactional(readOnly = true)
-    public CatalogSummaryDto summary(ProductType type) {
-        int threshold = storeService.lowStockThreshold();
-        ProductStatus archived = ProductStatus.ARCHIVED;
+    public CatalogSummaryDto summary(Long storeId, ProductType type) {
+        int threshold = storeService.lowStockThreshold(storeId);
+        Specification<Product> store = inStore(storeId);
+        Specification<Product> scope = store.and(ofType(type));
+        Specification<Product> active = scope.and(notArchived());
+
         Map<String, Long> byStatus = new LinkedHashMap<>();
         for (ProductStatus s : ProductStatus.values()) {
-            byStatus.put(s.name(), type == null
-                    ? productRepository.countByStatus(s)
-                    : productRepository.countByTypeAndStatus(type, s));
+            byStatus.put(s.name(), productRepository.count(scope.and(hasStatus(s))));
         }
         List<CatalogSummaryDto.CategoryCount> byType = Arrays.stream(ProductType.values())
-                .map(t -> new CatalogSummaryDto.CategoryCount(t.name(), t.getLabel(), productRepository.countByType(t)))
+                .map(t -> new CatalogSummaryDto.CategoryCount(t.name(), t.getLabel(),
+                        productRepository.count(store.and(ofType(t)))))
                 .toList();
-        long total = type == null ? productRepository.count() : productRepository.countByType(type);
-        long out = type == null
-                ? productRepository.countByStockAndStatusNot(0, archived)
-                : productRepository.countByTypeAndStockAndStatusNot(type, 0, archived);
-        long low = threshold < 1 ? 0 : type == null
-                ? productRepository.countByStockBetweenAndStatusNot(1, threshold, archived)
-                : productRepository.countByTypeAndStockBetweenAndStatusNot(type, 1, threshold, archived);
+
+        long total = productRepository.count(scope);
+        long out = productRepository.count(active.and(stockBetween(0, 0)));
+        long low = threshold < 1 ? 0 : productRepository.count(active.and(stockBetween(1, threshold)));
         return new CatalogSummaryDto(total, byStatus, byType, low, out, threshold);
     }
 
     @Transactional(readOnly = true)
-    public ProductDto get(Long id) {
-        return mapper.toDto(find(id));
+    public ProductDto get(Long storeId, Long id) {
+        return mapper.toDto(find(storeId, id));
     }
 
     @Transactional
-    public ProductDto create(ProductRequest req) {
+    public ProductDto create(Long storeId, ProductRequest req) {
         Product p = new Product();
+        p.setStore(storeService.store(storeId));
         apply(p, req);
         p.setStatus(req.status() == null ? ProductStatus.DRAFT : req.status());
         p.setStock(req.stock());
-        p.setSku(resolveSku(req.sku(), req.type(), null));
+        p.setSku(resolveSku(storeId, req.sku(), req.type(), null));
         productRepository.saveAndFlush(p);
-
         if (p.getStock() > 0) {
             stockMovementRepository.save(new StockMovement(p, p.getStock(), StockMovementReason.INITIAL, "Opening stock"));
         }
         ProductDto dto = mapper.toDto(p);
-        events.publish(LiveEvent.PRODUCT_CREATED, dto);
+        events.publish(storeId, LiveEvent.PRODUCT_CREATED, dto);
         return dto;
     }
 
     @Transactional
-    public ProductDto update(Long id, ProductRequest req) {
-        Product p = productRepository.findByIdForUpdate(id).orElseThrow(() -> new NotFoundException("product", id));
+    public ProductDto update(Long storeId, Long id, ProductRequest req) {
+        Product p = productRepository.findByIdForUpdate(id)
+                .filter(product -> product.getStore().getId().equals(storeId))
+                .orElseThrow(() -> new NotFoundException("product", id));
         apply(p, req);
         if (req.status() != null) p.setStatus(req.status());
-        p.setSku(resolveSku(req.sku(), req.type(), id));
+        p.setSku(resolveSku(storeId, req.sku(), req.type(), p));
 
         int delta = req.stock() - p.getStock();
         if (delta != 0) {
@@ -140,42 +151,40 @@ public class CatalogService {
             stockMovementRepository.save(new StockMovement(p, delta, StockMovementReason.ADJUSTMENT, "Edited on product form"));
         }
         productRepository.saveAndFlush(p);
-
         ProductDto dto = mapper.toDto(p);
-        events.publish(LiveEvent.PRODUCT_UPDATED, dto);
-        if (delta != 0) events.publish(LiveEvent.INVENTORY_CHANGED, Map.of("productIds", List.of(id)));
+        events.publish(storeId, LiveEvent.PRODUCT_UPDATED, dto);
+        if (delta != 0) events.publish(storeId, LiveEvent.INVENTORY_CHANGED, Map.of("productIds", List.of(id)));
         return dto;
     }
 
     @Transactional
-    public ProductDto changeStatus(Long id, ProductStatus status) {
-        Product p = find(id);
+    public ProductDto changeStatus(Long storeId, Long id, ProductStatus status) {
+        Product p = find(storeId, id);
         p.setStatus(status);
         productRepository.saveAndFlush(p);
         ProductDto dto = mapper.toDto(p);
-        events.publish(LiveEvent.PRODUCT_UPDATED, dto);
+        events.publish(storeId, LiveEvent.PRODUCT_UPDATED, dto);
         return dto;
     }
 
     /** Products that appear on orders cannot be deleted (order history must stay intact) - archive them instead. */
     @Transactional
-    public void delete(Long id) {
-        Product p = find(id);
+    public void delete(Long storeId, Long id) {
+        Product p = find(storeId, id);
         if (orderItemRepository.existsByProductId(id)) {
             throw new IllegalStateException("\"" + p.getName() + "\" has orders and cannot be deleted. Archive it instead.");
         }
-        recommendationRepository.deleteAllInvolving(id);
-        stockMovementRepository.deleteByProductId(id);
-        productRepository.delete(p);
-        events.publish(LiveEvent.PRODUCT_DELETED, Map.of("id", id));
+        remove(p);
+        events.publish(storeId, LiveEvent.PRODUCT_DELETED, Map.of("id", id));
     }
 
+    /** Ids that are unknown, or belong to another store, are skipped. */
     @Transactional
-    public BulkResult bulk(BulkProductRequest req) {
+    public BulkResult bulk(Long storeId, BulkProductRequest req) {
         int updated = 0;
         int skipped = 0;
         for (Long id : new LinkedHashSet<>(req.ids())) {
-            Optional<Product> found = productRepository.findById(id);
+            Optional<Product> found = productRepository.findByIdAndStoreId(id, storeId);
             if (found.isEmpty()) {
                 skipped++;
                 continue;
@@ -190,15 +199,12 @@ public class CatalogService {
                         skipped++;
                         continue;
                     }
-                    recommendationRepository.deleteAllInvolving(id);
-                    stockMovementRepository.deleteByProductId(id);
-                    productRepository.delete(p);
+                    remove(p);
                 }
             }
             updated++;
         }
         productRepository.flush();
-
         String verb = switch (req.action()) {
             case PUBLISH -> "published";
             case DRAFT -> "moved to draft";
@@ -208,12 +214,19 @@ public class CatalogService {
         String message = updated + " product" + (updated == 1 ? "" : "s") + " " + verb
                 + (skipped > 0 ? ", " + skipped + " skipped" + (req.action() == BulkProductRequest.Action.DELETE
                 ? " (products with orders can only be archived)" : "") : "");
-        events.publish(LiveEvent.PRODUCT_UPDATED, Map.of("ids", req.ids()));
+        events.publish(storeId, LiveEvent.PRODUCT_UPDATED, Map.of("ids", req.ids()));
         return new BulkResult(updated, skipped, message);
     }
 
-    private Product find(Long id) {
-        return productRepository.findById(id).orElseThrow(() -> new NotFoundException("product", id));
+    /** The store's own product, or 404 - a product of another store looks exactly like a missing one. */
+    private Product find(Long storeId, Long id) {
+        return productRepository.findByIdAndStoreId(id, storeId).orElseThrow(() -> new NotFoundException("product", id));
+    }
+
+    private void remove(Product p) {
+        recommendationRepository.deleteAllInvolving(p.getId());
+        stockMovementRepository.deleteByProductId(p.getId());
+        productRepository.delete(p);
     }
 
     private static void apply(Product p, ProductRequest req) {
@@ -242,51 +255,74 @@ public class CatalogService {
         return single == null ? List.of() : List.of(single);
     }
 
-    private String resolveSku(String requested, ProductType type, Long existingId) {
+    /**
+     * The SKU to store: the one asked for (it must be free within the store), else the product's
+     * current one, else a newly generated one.
+     *
+     * @param existing the product being edited, or null when creating
+     */
+    private String resolveSku(Long storeId, String requested, ProductType type, Product existing) {
         if (requested != null && !requested.isBlank()) {
             String sku = requested.trim().toUpperCase();
-            boolean taken = existingId == null
-                    ? productRepository.existsBySkuIgnoreCase(sku)
-                    : productRepository.existsBySkuIgnoreCaseAndIdNot(sku, existingId);
-            if (taken) throw new IllegalArgumentException("SKU " + sku + " is already used by another product");
+            boolean taken = existing == null
+                    ? productRepository.existsByStoreIdAndSkuIgnoreCase(storeId, sku)
+                    : productRepository.existsByStoreIdAndSkuIgnoreCaseAndIdNot(storeId, sku, existing.getId());
+            if (taken) throw new IllegalArgumentException("SKU " + sku + " is already used by another of your products");
             return sku;
         }
-        if (existingId != null) {
-            String current = productRepository.findById(existingId).map(Product::getSku).orElse(null);
-            if (current != null) return current;
-        }
+        if (existing != null && existing.getSku() != null) return existing.getSku();
         String sku;
         do {
             sku = "WL-" + SKU_PREFIX.get(type) + "-" + ThreadLocalRandom.current().nextInt(1000, 10000);
-        } while (productRepository.existsBySkuIgnoreCase(sku));
+        } while (productRepository.existsByStoreIdAndSkuIgnoreCase(storeId, sku));
         return sku;
     }
 
-    private static Specification<Product> buildSpec(String query, ProductType type, ProductStatus status,
-                                                    String stock, int threshold) {
-        return (root, cq, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            if (query != null && !query.isBlank()) {
-                String like = "%" + query.trim().toLowerCase() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("name")), like),
-                        cb.like(cb.lower(root.get("sku")), like),
-                        cb.like(cb.lower(root.get("color")), like)));
-            }
-            if (type != null) predicates.add(cb.equal(root.get("type"), type));
-            if (status != null) {
-                predicates.add(cb.equal(root.get("status"), status));
-            } else if (stock != null) {
-                predicates.add(cb.notEqual(root.get("status"), ProductStatus.ARCHIVED));
-            }
-            if ("low".equalsIgnoreCase(stock)) {
-                predicates.add(cb.greaterThan(root.get("stock"), 0));
-                predicates.add(cb.lessThanOrEqualTo(root.get("stock"), threshold));
-            } else if ("out".equalsIgnoreCase(stock)) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("stock"), 0));
-            }
-            return cb.and(predicates.toArray(Predicate[]::new));
-        };
+    // ---- query building blocks -------------------------------------------------
+
+    private static Specification<Product> inStore(Long storeId) {
+        return (root, cq, cb) -> cb.equal(root.get("store").get("id"), storeId);
+    }
+
+    /** Matches every product when {@code type} is null. */
+    private static Specification<Product> ofType(ProductType type) {
+        return (root, cq, cb) -> type == null ? cb.conjunction() : cb.equal(root.get("type"), type);
+    }
+
+    private static Specification<Product> hasStatus(ProductStatus status) {
+        return (root, cq, cb) -> cb.equal(root.get("status"), status);
+    }
+
+    private static Specification<Product> notArchived() {
+        return (root, cq, cb) -> cb.notEqual(root.get("status"), ProductStatus.ARCHIVED);
+    }
+
+    private static Specification<Product> stockBetween(int min, int max) {
+        return (root, cq, cb) -> cb.between(root.get("stock"), min, max);
+    }
+
+    /** The dashboard's product list filters: free-text search, category, status and stock level. */
+    private static Specification<Product> matching(String query, ProductType type, ProductStatus status,
+                                                   String stock, int threshold) {
+        Specification<Product> spec = ofType(type);
+        if (query != null && !query.isBlank()) {
+            String like = "%" + query.trim().toLowerCase() + "%";
+            spec = spec.and((root, cq, cb) -> cb.or(
+                    cb.like(cb.lower(root.get("name")), like),
+                    cb.like(cb.lower(root.get("sku")), like),
+                    cb.like(cb.lower(root.get("color")), like)));
+        }
+        if (status != null) {
+            spec = spec.and(hasStatus(status));
+        } else if (stock != null) {
+            spec = spec.and(notArchived());
+        }
+        if ("low".equalsIgnoreCase(stock)) {
+            spec = spec.and(stockBetween(1, threshold));
+        } else if ("out".equalsIgnoreCase(stock)) {
+            spec = spec.and((root, cq, cb) -> cb.lessThanOrEqualTo(root.get("stock"), 0));
+        }
+        return spec;
     }
 
     private static String blankToNull(String s) {

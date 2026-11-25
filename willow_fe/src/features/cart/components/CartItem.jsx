@@ -36,6 +36,11 @@ export default function CartItem({ entry, selected, onSelect, onSizeChange, onQt
       <div className="cart-line__body">
         {typeLabel && <p className="cart-line__category">{typeLabel}</p>}
         <Link to={productUrl} className="cart-line__name">{name}</Link>
+        {product.storeName && (
+          <p className="cart-line__seller">
+            Sold by <Link to={`/store/${product.storeId}`}>{product.storeName}</Link>
+          </p>
+        )}
 
         <div className="cart-line__options">
           {sizes.length > 0 && (

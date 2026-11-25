@@ -5,15 +5,22 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Operational preferences for the seller. Single row (id = 1). */
+/** How one store operates: stock alerts, order handling and shipping charges. One row per store. */
 @Entity
 @Table(name = "seller_settings")
 public class SellerSettings {
 
-    public static final long SINGLETON_ID = 1L;
-
+    /** The store these settings belong to; also the primary key. */
     @Id
-    private Long id = SINGLETON_ID;
+    @Column(name = "store_id")
+    private Long storeId;
+
+    protected SellerSettings() {}
+
+    /** Default settings for a new store. */
+    public SellerSettings(Long storeId) {
+        this.storeId = storeId;
+    }
 
     /** A product at or below this stock level is flagged as low stock. */
     @Column(nullable = false)
@@ -53,7 +60,7 @@ public class SellerSettings {
         updatedAt = Instant.now();
     }
 
-    public Long getId() { return id; }
+    public Long getStoreId() { return storeId; }
 
     public int getLowStockThreshold() { return lowStockThreshold; }
     public void setLowStockThreshold(int lowStockThreshold) { this.lowStockThreshold = lowStockThreshold; }

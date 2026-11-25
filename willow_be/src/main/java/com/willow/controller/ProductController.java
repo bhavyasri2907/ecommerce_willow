@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** The storefront's catalogue: live products from every store. */
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -18,9 +19,11 @@ public class ProductController {
         this.productService = productService;
     }
 
+    // GET /api/products?type=TOP&storeId=4 - both filters are optional
     @GetMapping
-    public List<ProductDto> list(@RequestParam(required = false) ProductType type) {
-        return productService.findAll(type);
+    public List<ProductDto> list(@RequestParam(required = false) ProductType type,
+                                 @RequestParam(required = false) Long storeId) {
+        return productService.findAll(type, storeId);
     }
 
     @GetMapping("/{id}")

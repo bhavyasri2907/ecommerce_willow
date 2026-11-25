@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, LogIn, Store } from 'lucide-react';
 import { useAuth } from '../context/AuthProvider.jsx';
-import { authService } from '../services/authService.js';
 import Button from '../components/common/Button.jsx';
 import { Field, Input } from '../components/common/Input.jsx';
 import logo from '../assets/images/willow-logo.png';
@@ -16,8 +15,8 @@ const COPY = {
     icon: LogIn,
   },
   signup: {
-    title: 'Set up your store',
-    sub: 'Create the seller account for your Willow store.',
+    title: 'Open your store on Willow',
+    sub: 'Create a seller account and start listing your products.',
     submit: 'Create store',
     icon: Store,
   },
@@ -38,37 +37,21 @@ function validate(isSignup, form) {
 }
 
 /**
- * Seller sign-in (/login) and store set-up (/signup). Willow is one store, so set-up is
- * offered only until its owner account exists; after that both routes show sign-in.
+ * Seller sign-in (/login) and sign-up (/signup). Willow is a marketplace: signing up
+ * opens a new store of the seller's own, alongside everyone else's.
  */
 export default function Login({ mode }) {
   const { seller, status, login, register } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [registered, setRegistered] = useState(null); // null until the server has answered
   const [form, setForm] = useState(EMPTY_FORM);
   const [fieldErrors, setFieldErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    authService
-      .status(controller.signal)
-      .then((s) => setRegistered(s.registered))
-      .catch((err) => err.name !== 'AbortError' && setRegistered(true)); // can't tell: offer sign-in
-    return () => controller.abort();
-  }, []);
-
   const destination = location.state?.from || '/';
   if (status === 'ready' && seller) return <Navigate to={destination} replace />;
-  // A brand-new store starts at set-up; an existing one never shows it.
-  if (registered === false && mode === 'login') return <Navigate to="/signup" replace state={location.state} />;
-  if (registered === true && mode === 'signup') return <Navigate to="/login" replace state={location.state} />;
-
-  // Wait for the server's answer so a new store doesn't flash the sign-in form first.
-  if (registered === null) return <div className="auth" aria-busy="true" />;
 
   const isSignup = mode === 'signup';
   const copy = COPY[mode];
@@ -163,6 +146,13 @@ export default function Login({ mode }) {
             {copy.submit}
           </Button>
         </form>
+
+        <p className="auth__switch">
+          {isSignup ? 'Already selling on Willow?' : 'New to Willow?'}{' '}
+          <Link to={isSignup ? '/login' : '/signup'} state={location.state}>
+            {isSignup ? 'Sign in' : 'Open your store'}
+          </Link>
+        </p>
       </div>
     </div>
   );

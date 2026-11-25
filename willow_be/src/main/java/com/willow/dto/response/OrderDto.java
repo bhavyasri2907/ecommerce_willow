@@ -12,6 +12,8 @@ import java.util.List;
 public record OrderDto(
         Long id,
         String orderNumber,
+        Long storeId,
+        String storeName,
         String customerName,
         String customerEmail,
         String customerPhone,
@@ -48,7 +50,8 @@ public record OrderDto(
 
     public static OrderDto from(Order o) {
         return new OrderDto(
-                o.getId(), o.getOrderNumber(), o.getCustomerName(), o.getCustomerEmail(), o.getCustomerPhone(),
+                o.getId(), o.getOrderNumber(), o.getStore().getId(), o.getStore().getStoreName(),
+                o.getCustomerName(), o.getCustomerEmail(), o.getCustomerPhone(),
                 o.getShippingAddress(), o.getShippingCity(), o.getStatus().name(),
                 o.getStatus().nextStatuses().stream().map(OrderStatus::name).toList(),
                 o.getPaymentMethod().name(), o.getItemCount(),

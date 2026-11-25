@@ -67,7 +67,7 @@ export default function Home() {
               <div className="hero-secondary-cta-wrapper">
                 <button
                   className="hero-secondary-cta"
-                  onClick={() => navigate('/studio')}
+                  onClick={() => navigate('/all')}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="4" x2="20" y1="21" y2="21" />
