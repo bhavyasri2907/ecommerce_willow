@@ -269,15 +269,9 @@ export default function ProductDetails() {
             <ul className="pdp-perks">
               <li>
                 <TruckIcon />
+                {/* The delivery fee itself is shown in the bag, not here. */}
                 <span>
-                  <strong>
-                    {Number(policy.shippingFee) === 0 || Number(policy.freeShippingThreshold) <= Number(product.price)
-                      ? 'Free delivery'
-                      : `Delivery ${formatPrice(policy.shippingFee)}`}
-                  </strong>
-                  {Number(policy.shippingFee) > 0 && Number(policy.freeShippingThreshold) > Number(product.price) && (
-                    <> · free on orders over {formatPrice(policy.freeShippingThreshold)} from this seller</>
-                  )}
+                  <strong>Fast delivery</strong> · shipped straight from the seller
                 </span>
               </li>
               <li>

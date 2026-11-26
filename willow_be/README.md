@@ -4,6 +4,10 @@ Spring Boot 3 REST API for the Willow storefront (`willow_fe`) and seller panel 
 
 ## Run
 
+First give the app your database password. Copy `.env.example` to `.env` (git ignores `.env`) and set
+`DB_PASSWORD`. On a server, set `DB_PASSWORD` (and `DB_URL`, `DB_USERNAME` if needed) as environment
+variables instead. Passwords are never kept in `application.properties`.
+
 ```bash
 mvn spring-boot:run
 ```
