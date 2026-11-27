@@ -66,7 +66,7 @@ export default function Orders() {
       <PageHeader
         title="Orders"
         description="Confirm, pack and ship orders. New storefront orders appear here in real time."
-        actions={<SearchInput value={search} onChange={setSearch} placeholder="Order #, customer, email or city" />}
+        actions={<SearchInput value={search} onChange={setSearch} placeholder="Order #, customer, phone, city or pincode" />}
       />
 
       <Card padded={false} className="table-card">

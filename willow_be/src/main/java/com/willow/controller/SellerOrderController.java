@@ -48,6 +48,6 @@ public class SellerOrderController {
 
     @PatchMapping("/{id}/status")
     public OrderDto updateStatus(@PathVariable Long id, @Valid @RequestBody StatusRequest req) {
-        return orderService.updateStatus(seller.storeId(), id, OrderStatus.valueOf(req.status().toUpperCase()));
+        return orderService.updateStatus(seller.storeId(), id, OrderStatus.valueOf(req.status().toUpperCase()), req.note());
     }
 }

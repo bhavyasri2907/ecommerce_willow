@@ -27,6 +27,15 @@ public class Order {
     @JoinColumn(name = "store_id", nullable = false, updatable = false)
     private Store store;
 
+    /** The shopper's account; null for orders not placed through a signed-in checkout (e.g. the simulator). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", updatable = false)
+    private Customer customer;
+
+    /** The browser's checkout id; the same checkout placed twice returns the existing orders. */
+    @Column(length = 64, updatable = false)
+    private String checkoutRef;
+
     @Column(nullable = false)
     private String customerName;
 
@@ -40,6 +49,12 @@ public class Order {
 
     private String shippingCity;
 
+    @Column(length = 80)
+    private String shippingState;
+
+    @Column(length = 10)
+    private String shippingPincode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private OrderStatus status = OrderStatus.PENDING;
@@ -47,6 +62,10 @@ public class Order {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private PaymentMethod paymentMethod;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal subtotal = BigDecimal.ZERO;
@@ -61,6 +80,11 @@ public class Order {
     @BatchSize(size = 50)
     @OrderBy("id ASC")
     private List<OrderItem> items = new ArrayList<>();
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
+    @OrderBy("createdAt ASC, id ASC")
+    private List<OrderStatusChange> history = new ArrayList<>();
 
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -86,6 +110,39 @@ public class Order {
         item.setOrder(this);
         items.add(item);
     }
+
+    /** Moves the order to {@code target} and records the step in its history. Callers check the transition is allowed. */
+    public void moveTo(OrderStatus target, OrderActor actor, String note) {
+        this.status = target;
+        history.add(new OrderStatusChange(this, target, actor, note));
+    }
+
+    /** The note recorded when the order was cancelled, if any. */
+    public String getCancellationNote() {
+        if (status != OrderStatus.CANCELLED) return null;
+        for (int i = history.size() - 1; i >= 0; i--) {
+            OrderStatusChange c = history.get(i);
+            if (c.getStatus() == OrderStatus.CANCELLED) return c.getNote();
+        }
+        return null;
+    }
+
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
+
+    public String getCheckoutRef() { return checkoutRef; }
+    public void setCheckoutRef(String checkoutRef) { this.checkoutRef = checkoutRef; }
+
+    public String getShippingState() { return shippingState; }
+    public void setShippingState(String shippingState) { this.shippingState = shippingState; }
+
+    public String getShippingPincode() { return shippingPincode; }
+    public void setShippingPincode(String shippingPincode) { this.shippingPincode = shippingPincode; }
+
+    public PaymentStatus getPaymentStatus() { return paymentStatus; }
+    public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
+
+    public List<OrderStatusChange> getHistory() { return history; }
 
     public int getItemCount() {
         return items.stream().mapToInt(OrderItem::getQuantity).sum();

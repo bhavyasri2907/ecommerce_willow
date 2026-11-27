@@ -34,6 +34,11 @@ public enum OrderStatus {
         return TRANSITIONS.get(this).contains(target);
     }
 
+    /** A shopper may cancel their own order until the seller has packed it. */
+    public boolean isCustomerCancellable() {
+        return this == PENDING || this == CONFIRMED;
+    }
+
     /** Orders in these states do not count towards revenue and hand their stock back. */
     public boolean isVoid() {
         return this == CANCELLED || this == RETURNED;

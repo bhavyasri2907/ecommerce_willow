@@ -10,7 +10,8 @@ import { SkeletonRows } from '../common/Loader.jsx';
 import ProductThumb from '../common/ProductThumb.jsx';
 import OrderStatusBadge from './OrderStatusBadge.jsx';
 import OrderTimeline from './OrderTimeline.jsx';
-import { ORDER_STATUS, PAYMENT_LABELS } from '../../constants/orderStatus.js';
+import { ACTOR_LABELS, ORDER_STATUS, PAYMENT_LABELS, PAYMENT_STATUS } from '../../constants/orderStatus.js';
+import { Badge } from '../common/Badge.jsx';
 import { formatPrice } from '../../utils/formatPrice.js';
 import { formatDateTime, timeAgo } from '../../utils/formatDate.js';
 
@@ -75,6 +76,13 @@ export default function OrderDetailsDrawer({ orderId, onClose }) {
         <div className="order-detail">
           <OrderTimeline status={o.status} />
 
+          {o.status === 'CANCELLED' && (
+            <p className="order-cancel-note">
+              Cancelled by {o.history.at(-1)?.actor === 'CUSTOMER' ? 'the customer' : 'you'}
+              {o.cancellationNote ? `: “${o.cancellationNote}”` : '.'}
+            </p>
+          )}
+
           <section>
             <h3 className="section-title">Items ({o.itemCount})</h3>
             <ul className="line-items">
@@ -105,11 +113,42 @@ export default function OrderDetailsDrawer({ orderId, onClose }) {
             </div>
             <div>
               <h3 className="section-title">Shipping</h3>
-              <p className="icon-line"><MapPin size={14} aria-hidden /> {[o.shippingAddress, o.shippingCity].filter(Boolean).join(', ') || '—'}</p>
+              <p className="icon-line icon-line--top">
+                <MapPin size={14} aria-hidden />
+                <span>
+                  {o.shippingAddress || '—'}
+                  {(o.shippingCity || o.shippingState) && <><br />{[o.shippingCity, o.shippingState].filter(Boolean).join(', ')}</>}
+                  {o.shippingPincode && <> – {o.shippingPincode}</>}
+                </span>
+              </p>
               <h3 className="section-title section-title--spaced">Payment</h3>
-              <p>{PAYMENT_LABELS[o.paymentMethod] ?? o.paymentMethod}</p>
+              <p className="icon-line">
+                {PAYMENT_LABELS[o.paymentMethod] ?? o.paymentMethod}
+                {PAYMENT_STATUS[o.paymentStatus] && (
+                  <Badge tone={PAYMENT_STATUS[o.paymentStatus].tone}>
+                    {o.paymentStatus === 'PENDING' && o.paymentMethod === 'COD'
+                      ? `Collect ${formatPrice(o.total)}`
+                      : PAYMENT_STATUS[o.paymentStatus].label}
+                  </Badge>
+                )}
+              </p>
             </div>
           </section>
+
+          {o.history?.length > 0 && (
+            <section>
+              <h3 className="section-title">History</h3>
+              <ol className="order-history">
+                {[...o.history].reverse().map((h, i) => (
+                  <li key={i}>
+                    <span className="strong">{ORDER_STATUS[h.status]?.label ?? h.status}</span>
+                    <span className="muted small"> · {ACTOR_LABELS[h.actor] ?? h.actor} · {formatDateTime(h.at)}</span>
+                    {h.note && <div className="muted small">{h.note}</div>}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
           <p className="muted small">Last updated {timeAgo(o.updatedAt)}</p>
         </div>
       )}

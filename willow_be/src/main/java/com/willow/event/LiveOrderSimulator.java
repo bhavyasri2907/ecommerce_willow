@@ -1,13 +1,15 @@
 package com.willow.event;
 
-import com.willow.dto.request.CreateOrderRequest;
+import com.willow.dto.request.OrderLine;
 import com.willow.entity.Order;
+import com.willow.entity.PaymentMethod;
 import com.willow.entity.OrderStatus;
 import com.willow.entity.Product;
 import com.willow.entity.ProductStatus;
 import com.willow.repository.OrderRepository;
 import com.willow.repository.ProductRepository;
 import com.willow.service.OrderService;
+import com.willow.service.PlaceOrder;
 import com.willow.service.StoreService;
 import com.willow.util.SampleCustomers;
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -62,18 +65,18 @@ public class LiveOrderSimulator {
         if (available.isEmpty()) return;
 
         int lines = 1 + (random.nextInt(100) < 35 ? 1 : 0) + (random.nextInt(100) < 10 ? 1 : 0);
-        List<CreateOrderRequest.Line> items = new ArrayList<>();
+        List<OrderLine> items = new ArrayList<>();
         for (int i = 0; i < lines && !available.isEmpty(); i++) {
             Product p = available.remove(random.nextInt(available.size()));
-            List<String> sizes = p.getSizes() == null ? List.of() : List.of(p.getSizes().split(","));
+            List<String> sizes = p.getSizes() == null ? List.of() : Arrays.stream(p.getSizes().split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList();
             String size = sizes.isEmpty() ? null : sizes.get(random.nextInt(sizes.size()));
             int qty = p.getStock() > 1 && random.nextInt(100) < 15 ? 2 : 1;
-            items.add(new CreateOrderRequest.Line(p.getId(), size, qty));
+            items.add(new OrderLine(p.getId(), size, qty));
         }
 
         SampleCustomers.Customer c = SampleCustomers.random(random);
-        orderService.place(new CreateOrderRequest(c.name(), c.email(), c.phone(), c.address(), c.city(),
-                SampleCustomers.randomPayment(random), items));
+        orderService.place(new PlaceOrder(null, null, c.name(), c.email(), c.phone(),
+                c.address(), c.city(), c.state(), c.pincode(), PaymentMethod.COD, items));
     }
 
     private void advanceOrder(Long storeId) {
@@ -82,6 +85,6 @@ public class LiveOrderSimulator {
         if (open.isEmpty()) return;
         Order order = open.get(random.nextInt(open.size()));
         OrderStatus next = order.getStatus().nextStatuses().get(0);
-        orderService.updateStatus(storeId, order.getId(), next);
+        orderService.updateStatus(storeId, order.getId(), next, null);
     }
 }

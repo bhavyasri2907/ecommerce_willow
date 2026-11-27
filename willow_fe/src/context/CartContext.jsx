@@ -1,14 +1,38 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 const CartContext = createContext(null);
 
+const STORAGE_KEY = 'willow_bag_v1';
+
+/** The bag, wishlist and checkout selection saved in this browser, so a refresh or sign-in keeps them. */
+function loadSaved() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    return saved && typeof saved === 'object' ? saved : {};
+  } catch {
+    return {};
+  }
+}
+
 export function CartProvider({ children }) {
+  const [saved] = useState(loadSaved);
   // { [productId]: { product, qty, size } }
-  const [items, setItems] = useState({});
+  const [items, setItems] = useState(saved.items ?? {});
   const [isOpen, setIsOpen] = useState(false);
 
-  // Wishlist: { [productId]: product }. Starts empty; filled by the heart buttons.
-  const [wishlist, setWishlist] = useState({});
+  // Wishlist: { [productId]: product }. Filled by the heart buttons.
+  const [wishlist, setWishlist] = useState(saved.wishlist ?? {});
+
+  // Product ids the shopper chose to check out on the bag page.
+  const [checkoutIds, setCheckoutIds] = useState(saved.checkoutIds ?? []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ items, wishlist, checkoutIds }));
+    } catch {
+      /* storage unavailable (private mode): the bag lasts until the tab closes */
+    }
+  }, [items, wishlist, checkoutIds]);
 
   /** `size` is the one picked on the product page; without it the bag keeps or defaults the size. */
   function addToCart(product, size) {
@@ -122,6 +146,9 @@ export function CartProvider({ children }) {
     removeItems,
     removeItem,
     clearCart,
+    // Checkout
+    checkoutIds,
+    setCheckoutIds,
     // Wishlist
     wishlist,
     wishlistCount,

@@ -69,11 +69,20 @@ public class AuthService {
     /** The shopper a token belongs to; 401 when the token is missing, unknown or expired. */
     @Transactional(readOnly = true)
     public CustomerDto currentCustomer(String token) {
+        return CustomerDto.from(requireSession(token).getCustomer());
+    }
+
+    /** The id of the shopper a token belongs to; 401 when the token is missing, unknown or expired. */
+    @Transactional(readOnly = true)
+    public Long requireCustomerId(String token) {
+        return requireSession(token).getCustomer().getId();
+    }
+
+    private CustomerSession requireSession(String token) {
         if (token == null) throw new UnauthorizedException("Please sign in");
-        CustomerSession session = sessions.findByTokenHash(SessionTokens.hash(token))
+        return sessions.findByTokenHash(SessionTokens.hash(token))
                 .filter(s -> s.getExpiresAt().isAfter(Instant.now()))
                 .orElseThrow(() -> new UnauthorizedException("Your session has expired. Please sign in again."));
-        return CustomerDto.from(session.getCustomer());
     }
 
     /** Ends the session. Safe to call with a token that is already gone. */

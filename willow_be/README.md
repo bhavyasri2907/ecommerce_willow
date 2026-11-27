@@ -15,7 +15,7 @@ mvn spring-boot:run
 Or run `com.willow.WillowApplication` from your IDE. The API starts on http://localhost:8080.
 
 Data lives in the PostgreSQL database named in `application.properties` (`willow_local` by default).
-Create the tables by running the scripts in `src/main/resources/db/` in order (`01_...` to `06_...`);
+Create the tables by running the scripts in `src/main/resources/db/` in order (`01_...` to `08_...`);
 Hibernate only checks that the tables match the entities.
 
 ## Marketplace model
@@ -56,13 +56,15 @@ src/main/resources/
 
 | Area | Endpoints |
 |------|-----------|
-| Storefront | `GET /api/products?type=&storeId=`, `GET /api/products/{id}` (live products only), `GET /api/stores/{id}` (name, tagline, description, logo), `GET /api/stores/policies?ids=` (shipping and returns per store), `GET /api/products/{id}/curated-fit` (the seller's suggested pieces), `POST /api/orders` (returns one order per store) |
+| Storefront | `GET /api/products?type=&storeId=`, `GET /api/products/{id}` (live products only), `GET /api/stores/{id}` (name, tagline, description, logo), `GET /api/stores/policies?ids=` (shipping and returns per store), `GET /api/products/{id}/curated-fit` (the seller's suggested pieces) |
+| Shopper: orders | `POST /api/orders` (checkout, Cash on Delivery only; body `{ checkoutRef, addressId, items }`; returns one order per store; resending the same `checkoutRef` returns the same orders), `GET /api/orders?page=&size=`, `GET /api/orders/{orderNumber}`, `POST /api/orders/{orderNumber}/cancel` (`{ reason }`, until the order is packed) |
+| Shopper: addresses | `GET/POST /api/account/addresses`, `PUT/DELETE /api/account/addresses/{id}`, `PATCH .../{id}/default` |
 | Accounts | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout` (send `Authorization: Bearer <token>`) |
 | Seller: sign-in | `POST /api/seller/auth/register` (opens a new store), `POST /api/seller/auth/login`, `GET /api/seller/auth/me`, `POST /api/seller/auth/logout` |
 | Seller: curated fit | `GET /api/seller/curations`, `GET .../resolve?link=`, `GET/POST .../{productId}/picks` (by `link` or `pickId`), `DELETE .../{productId}/picks/{pickId}` |
 | Seller: products | `GET/POST /api/seller/products`, `GET/PUT/DELETE /api/seller/products/{id}`, `PATCH .../{id}/status`, `POST .../bulk`, `GET .../summary` |
 | Seller: photos | `POST /api/seller/uploads` (multipart `file`; JPG, PNG or WebP up to 5 MB) returns `{ url }`; files are served at `/uploads/<file>` |
-| Seller: orders | `GET /api/seller/orders`, `GET .../counts`, `GET .../{id}`, `PATCH .../{id}/status` |
+| Seller: orders | `GET /api/seller/orders`, `GET .../counts`, `GET .../{id}`, `PATCH .../{id}/status` (`{ status, note }`; delivering a COD order marks it paid) |
 | Seller: inventory | `GET /api/seller/inventory`, `GET .../summary`, `POST .../{productId}/adjust`, `GET .../movements` |
 | Seller: other | `GET /api/seller/analytics?range=`, `GET/PUT /api/seller/store`, `GET/PUT /api/seller/settings`, `GET /api/seller/events` (SSE) |
 

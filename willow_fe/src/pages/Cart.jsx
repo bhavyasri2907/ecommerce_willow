@@ -10,7 +10,7 @@ import { cartTotals, isOutOfStock } from '../features/cart/cartTotals.js';
 
 export default function Cart() {
   const navigate = useNavigate();
-  const { items, setQty, setSize, removeItems, addToWishlist } = useCart();
+  const { items, setQty, setSize, removeItems, addToWishlist, setCheckoutIds } = useCart();
   // Everything is selected by default, so only the items the shopper unticks are tracked.
   const [unselected, setUnselected] = useState(new Set());
 
@@ -39,8 +39,9 @@ export default function Cart() {
     removeItems(selectedIds);
   }
 
+  /** Items stay in the bag until the order is actually placed on the checkout page. */
   function placeOrder() {
-    removeItems(selectedIds);
+    setCheckoutIds(selectedIds);
     navigate('/checkout');
   }
 

@@ -15,3 +15,14 @@ export const FULFILMENT_STEPS = ['PENDING', 'CONFIRMED', 'PACKED', 'SHIPPED', 'D
 export const ORDER_TABS = ['ALL', 'PENDING', 'CONFIRMED', 'PACKED', 'SHIPPED', 'DELIVERED', 'CANCELLED', 'RETURNED'];
 
 export const PAYMENT_LABELS = { UPI: 'UPI', CARD: 'Card', NET_BANKING: 'Net banking', COD: 'Cash on delivery' };
+
+/** Whether Cash on Delivery money has been collected. */
+export const PAYMENT_STATUS = {
+  PENDING: { label: 'To collect', tone: 'warning' },
+  PAID: { label: 'Paid', tone: 'success' },
+  REFUNDED: { label: 'Refunded', tone: 'muted' },
+  VOID: { label: 'Not charged', tone: 'muted' },
+};
+
+/** Who moved an order to a status, as shown in its history. */
+export const ACTOR_LABELS = { CUSTOMER: 'Customer', SELLER: 'You', SYSTEM: 'Willow' };

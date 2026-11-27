@@ -29,7 +29,7 @@ export const ACCOUNT_NAV = [
     tone: 'plum',
     section: {
       slug: 'orders',
-      intro: 'Track deliveries, download invoices and start a return.',
+      intro: 'Track deliveries and cancel orders that have not been packed yet.',
       emptyTitle: 'No orders yet',
       emptyText: 'When you place an order it will show up here with live tracking.',
       action: { label: 'Start shopping', to: '/all' },

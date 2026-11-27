@@ -2,6 +2,8 @@ package com.willow.repository;
 
 import com.willow.entity.Order;
 import com.willow.entity.OrderStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -21,9 +23,17 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
 
     List<Order> findByStoreIdAndStatusIn(Long storeId, List<OrderStatus> statuses);
 
-    /** Order numbers are one sequence across the whole marketplace. */
-    @Query("select max(o.orderNumber) from Order o")
-    String findMaxOrderNumber();
+    /** Next number from the marketplace-wide order number sequence (08_checkout.sql). */
+    @Query(value = "select nextval('order_number_seq')", nativeQuery = true)
+    long nextOrderNumber();
+
+    /** A shopper's orders, newest first (My Orders). */
+    Page<Order> findByCustomerId(Long customerId, Pageable pageable);
+
+    Optional<Order> findByCustomerIdAndOrderNumber(Long customerId, String orderNumber);
+
+    /** Orders an earlier attempt of the same checkout already created. */
+    List<Order> findByCustomerIdAndCheckoutRefOrderByIdAsc(Long customerId, String checkoutRef);
 
     /** One store's orders since the given instant, with items and products fetched in one go for analytics. */
     @Query("""

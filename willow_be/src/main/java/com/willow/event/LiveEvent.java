@@ -11,6 +11,8 @@ public record LiveEvent(Long storeId, String type, Object payload, Instant at) {
 
     public static final String ORDER_CREATED = "order.created";
     public static final String ORDER_UPDATED = "order.updated";
+    /** Sent alongside order.updated when the shopper cancels, so the dashboard can alert the seller. */
+    public static final String ORDER_CANCELLED_BY_CUSTOMER = "order.cancelled";
     public static final String PRODUCT_CREATED = "product.created";
     public static final String PRODUCT_UPDATED = "product.updated";
     public static final String PRODUCT_DELETED = "product.deleted";

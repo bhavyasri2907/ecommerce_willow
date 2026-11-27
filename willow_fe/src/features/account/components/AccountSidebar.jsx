@@ -27,7 +27,7 @@ export default function AccountSidebar({ profile }) {
               <NavLink
                 key={item.key}
                 to={item.to}
-                end
+                end={item.to === "/account"}
                 onClick={item.signOut ? logout : undefined}
                 className={({ isActive }) => `account-nav__link ${isActive && item.to !== '/' ? 'is-active' : ''}`}
               >

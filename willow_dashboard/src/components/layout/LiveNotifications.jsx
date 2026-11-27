@@ -22,6 +22,18 @@ export default function LiveNotifications() {
     });
   });
 
+  useLiveEvent('order.cancelled', (event) => {
+    if (settings && !settings.orderNotifications) return;
+    const o = event.payload;
+    toast.show({
+      tone: 'warning',
+      title: `${o.orderNumber} cancelled by customer`,
+      description: `${o.customerName}${o.cancellationNote ? ` · “${o.cancellationNote}”` : ''} · stock returned to inventory`,
+      action: { label: 'View order', onClick: () => navigate(`/orders?order=${o.id}`) },
+      duration: 8000,
+    });
+  });
+
   useLiveEvent('inventory.low', (event) => {
     if (settings && !settings.lowStockAlerts) return;
     const p = event.payload;

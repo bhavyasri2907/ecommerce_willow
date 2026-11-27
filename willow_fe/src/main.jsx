@@ -10,6 +10,7 @@ import './styles/wishlist.css';
 import './styles/cart.css';
 import './styles/product.css';
 import './styles/auth.css';
+import './styles/checkout.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
