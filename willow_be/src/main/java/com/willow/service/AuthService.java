@@ -1,6 +1,8 @@
 package com.willow.service;
 
+import com.willow.dto.request.ChangePasswordRequest;
 import com.willow.dto.request.LoginRequest;
+import com.willow.dto.request.ProfileRequest;
 import com.willow.dto.request.RegisterRequest;
 import com.willow.dto.response.AuthResponse;
 import com.willow.dto.response.CustomerDto;
@@ -83,6 +85,40 @@ public class AuthService {
         return sessions.findByTokenHash(SessionTokens.hash(token))
                 .filter(s -> s.getExpiresAt().isAfter(Instant.now()))
                 .orElseThrow(() -> new UnauthorizedException("Your session has expired. Please sign in again."));
+    }
+
+    /** Updates the shopper's name, email and phone. Changing the email needs the current password. */
+    @Transactional
+    public CustomerDto updateProfile(Long customerId, ProfileRequest req) {
+        Customer customer = customers.findById(customerId).orElseThrow(() -> new UnauthorizedException("Please sign in"));
+        String email = normaliseEmail(req.email());
+        if (!email.equals(customer.getEmail())) {
+            if (req.currentPassword() == null || !passwordEncoder.matches(req.currentPassword(), customer.getPasswordHash())) {
+                throw new IllegalArgumentException("Enter your current password to change your email.");
+            }
+            if (customers.existsByEmail(email)) {
+                throw new IllegalStateException("Another account already uses this email.");
+            }
+            customer.setEmail(email);
+        }
+        customer.setFullName(req.fullName().trim());
+        customer.setPhone(req.phone() == null || req.phone().isBlank() ? null : AddressService.normalisePhone(req.phone()));
+        return CustomerDto.from(customers.saveAndFlush(customer));
+    }
+
+    /** Changes the password and signs the shopper out on every other device; this session stays open. */
+    @Transactional
+    public void changePassword(Long customerId, String currentToken, ChangePasswordRequest req) {
+        Customer customer = customers.findById(customerId).orElseThrow(() -> new UnauthorizedException("Please sign in"));
+        if (!passwordEncoder.matches(req.currentPassword(), customer.getPasswordHash())) {
+            throw new IllegalArgumentException("Your current password is incorrect.");
+        }
+        if (passwordEncoder.matches(req.newPassword(), customer.getPasswordHash())) {
+            throw new IllegalArgumentException("Choose a password you haven't used for this account.");
+        }
+        customer.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        customers.save(customer);
+        sessions.deleteOtherSessions(customerId, SessionTokens.hash(currentToken));
     }
 
     /** Ends the session. Safe to call with a token that is already gone. */

@@ -55,9 +55,18 @@ export function AuthProvider({ children }) {
     if (token) authService.logout(token).catch(() => {});
   }, []);
 
+  /** Saves profile changes and shows them everywhere straight away. */
+  const updateProfile = useCallback(
+    (details) => authService.updateProfile(details).then((customer) => {
+      setUser(customer);
+      return customer;
+    }),
+    []
+  );
+
   const value = useMemo(
-    () => ({ user, status, login, register, logout }),
-    [user, status, login, register, logout]
+    () => ({ user, status, login, register, logout, updateProfile }),
+    [user, status, login, register, logout, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

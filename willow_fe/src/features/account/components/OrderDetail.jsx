@@ -112,6 +112,9 @@ export default function OrderDetail() {
                 <div className="review-item__text">
                   <Link to={`/product/${item.productId}`}><strong>{item.productName}</strong></Link>
                   <span>{item.size ? `Size ${item.size} · ` : ''}{item.quantity} × {formatPrice(item.unitPrice)}</span>
+                  {o.status === 'DELIVERED' && (
+                    <Link to={`/product/${item.productId}#write-review`} className="link-btn order-item__review">★ Rate &amp; review</Link>
+                  )}
                 </div>
                 <span className="review-item__price">{formatPrice(item.lineTotal)}</span>
               </li>

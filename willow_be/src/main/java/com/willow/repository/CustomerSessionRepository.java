@@ -18,6 +18,11 @@ public interface CustomerSessionRepository extends JpaRepository<CustomerSession
     @Query("delete from CustomerSession s where s.tokenHash = :tokenHash")
     void deleteByTokenHash(@Param("tokenHash") String tokenHash);
 
+    /** Signs the shopper out everywhere except the session with {@code keepTokenHash}. */
+    @Modifying
+    @Query("delete from CustomerSession s where s.customer.id = :customerId and s.tokenHash <> :keepTokenHash")
+    void deleteOtherSessions(@Param("customerId") Long customerId, @Param("keepTokenHash") String keepTokenHash);
+
     @Modifying
     @Query("delete from CustomerSession s where s.expiresAt < :now")
     void deleteExpired(@Param("now") Instant now);

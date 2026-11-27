@@ -15,7 +15,7 @@ mvn spring-boot:run
 Or run `com.willow.WillowApplication` from your IDE. The API starts on http://localhost:8080.
 
 Data lives in the PostgreSQL database named in `application.properties` (`willow_local` by default).
-Create the tables by running the scripts in `src/main/resources/db/` in order (`01_...` to `08_...`);
+Create the tables by running the scripts in `src/main/resources/db/` in order (`01_...` to `09_...`);
 Hibernate only checks that the tables match the entities.
 
 ## Marketplace model
@@ -56,8 +56,10 @@ src/main/resources/
 
 | Area | Endpoints |
 |------|-----------|
-| Storefront | `GET /api/products?type=&storeId=`, `GET /api/products/{id}` (live products only), `GET /api/stores/{id}` (name, tagline, description, logo), `GET /api/stores/policies?ids=` (shipping and returns per store), `GET /api/products/{id}/curated-fit` (the seller's suggested pieces) |
+| Storefront | `GET /api/products?type=&storeId=`, `GET /api/products/{id}` (live products only), `GET /api/stores/{id}` (name, tagline, description, logo), `GET /api/stores/policies?ids=` (shipping and returns per store), `GET /api/products/{id}/curated-fit` (the seller's suggested pieces), `GET /api/products/{id}/reviews?sort=NEWEST|HIGHEST|LOWEST&page=&size=` (rating summary, star breakdown and a page of reviews). Product responses carry `rating` and `reviewCount` |
 | Shopper: orders | `POST /api/orders` (checkout, Cash on Delivery only; body `{ checkoutRef, addressId, items }`; returns one order per store; resending the same `checkoutRef` returns the same orders), `GET /api/orders?page=&size=`, `GET /api/orders/{orderNumber}`, `POST /api/orders/{orderNumber}/cancel` (`{ reason }`, until the order is packed) |
+| Shopper: reviews | `GET /api/account/reviews` (mine), `GET .../pending` (delivered, not yet reviewed), `GET .../product/{productId}` (`{ canReview, review }`), `PUT .../product/{productId}` (`{ rating, title, comment }`; needs a delivered order for the product; replaces an earlier review), `DELETE .../product/{productId}` |
+| Shopper: profile | `PUT /api/account/profile` (`{ fullName, email, phone, currentPassword }`; the password is needed only to change the email), `PUT /api/account/password` (`{ currentPassword, newPassword }`; signs out other devices) |
 | Shopper: addresses | `GET/POST /api/account/addresses`, `PUT/DELETE /api/account/addresses/{id}`, `PATCH .../{id}/default` |
 | Accounts | `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout` (send `Authorization: Bearer <token>`) |
 | Seller: sign-in | `POST /api/seller/auth/register` (opens a new store), `POST /api/seller/auth/login`, `GET /api/seller/auth/me`, `POST /api/seller/auth/logout` |

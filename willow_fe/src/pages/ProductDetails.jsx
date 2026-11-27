@@ -8,6 +8,8 @@ import { CATEGORY_PAGES } from '../utils/constants.js';
 import { ChevronLeftIcon, ChevronRightIcon, HeartIcon, ShoppingCartIcon } from '../assets/icons/NavIcons.jsx';
 import ProductImage from '../features/products/components/ProductImage.jsx';
 import ProductCard from '../features/products/components/ProductCard.jsx';
+import ProductReviews from '../features/reviews/components/ProductReviews.jsx';
+import Stars from '../features/reviews/components/Stars.jsx';
 
 const MORE_FROM_STORE = 4;
 /** Pieces of a Curated Fit shown before "Show all". */
@@ -149,6 +151,11 @@ export default function ProductDetails() {
     sizes.length > 0 && { label: 'Sizes', value: sizes.join(', ') },
   ].filter(Boolean);
 
+  function scrollToReviews(e) {
+    e.preventDefault();
+    document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+  }
+
   function handleAddToBag() {
     if (sizes.length > 0 && !size) {
       setSizeMissing(true);
@@ -210,6 +217,17 @@ export default function ProductDetails() {
         <div className="pdp-info">
           <Link to={storeUrl} className="pdp-brand">{product.brand || product.storeName}</Link>
           <h1 className="pdp-title">{product.name}</h1>
+          <a href="#reviews" className="pdp-rating" onClick={scrollToReviews}>
+            {product.reviewCount > 0 ? (
+              <>
+                <Stars value={product.rating} size={15} />
+                <strong>{Number(product.rating).toFixed(1)}</strong>
+                <span>({product.reviewCount} review{product.reviewCount === 1 ? '' : 's'})</span>
+              </>
+            ) : (
+              <span>No reviews yet</span>
+            )}
+          </a>
 
           <div className="pdp-price">
             <span className="pdp-price__now">{formatPrice(product.price)}</span>
@@ -362,6 +380,12 @@ export default function ProductDetails() {
           </section>
         </div>
       </div>
+
+      <ProductReviews
+        key={product.id}
+        productId={product.id}
+        onChange={(summary) => setProduct((p) => ({ ...p, ...summary }))}
+      />
 
       {more.length > 0 && (
         <section className="pdp-more">

@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '../components/layout/MainLayout.jsx';
 import Home from '../pages/Home.jsx';
 import Products from '../pages/Products.jsx';
@@ -6,7 +6,8 @@ import ProductDetails from '../pages/ProductDetails.jsx';
 import Wishlist from '../pages/Wishlist.jsx';
 import Account from '../pages/Account.jsx';
 import AccountOverview from '../features/account/components/AccountOverview.jsx';
-import AccountSection from '../features/account/components/AccountSection.jsx';
+import MyReviews from '../features/account/components/MyReviews.jsx';
+import Profile from '../features/account/components/Profile.jsx';
 import StorePage from '../pages/StorePage.jsx';
 import Cart from '../pages/Cart.jsx';
 import Checkout from '../pages/Checkout.jsx';
@@ -33,7 +34,9 @@ export default function AppRoutes() {
           <Route path="orders" element={<MyOrders />} />
           <Route path="orders/:orderNumber" element={<OrderDetail />} />
           <Route path="addresses" element={<Addresses />} />
-          <Route path=":section" element={<AccountSection />} />
+          <Route path="reviews" element={<MyReviews />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="*" element={<Navigate to="/account" replace />} />
         </Route>
         <Route path="/store/:storeId" element={<StorePage />} />
         <Route path="/cart" element={<Cart />} />

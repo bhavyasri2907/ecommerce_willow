@@ -42,15 +42,25 @@ public record ProductDto(
         String material,
         List<String> images,
         Long storeId,
-        String storeName
+        String storeName,
+        BigDecimal rating,
+        long reviewCount
 ) {
     public static final int DEFAULT_LOW_STOCK_THRESHOLD = 10;
 
     public static ProductDto from(Product p) {
-        return of(p, ProductSales.NONE, DEFAULT_LOW_STOCK_THRESHOLD);
+        return of(p, ProductSales.NONE, DEFAULT_LOW_STOCK_THRESHOLD, RatingStats.NONE);
+    }
+
+    public static ProductDto from(Product p, RatingStats rating) {
+        return of(p, ProductSales.NONE, DEFAULT_LOW_STOCK_THRESHOLD, rating);
     }
 
     public static ProductDto of(Product p, ProductSales sales, int lowStockThreshold) {
+        return of(p, sales, lowStockThreshold, RatingStats.NONE);
+    }
+
+    public static ProductDto of(Product p, ProductSales sales, int lowStockThreshold, RatingStats rating) {
         return new ProductDto(
                 p.getId(), p.getName(), p.getType().name(), p.getColor(), p.getHex(), p.getStyle(),
                 p.getPrice(), p.getDescription(),
@@ -62,7 +72,8 @@ public record ProductDto(
                 p.getCreatedAt(), p.getUpdatedAt(),
                 p.getGender().name(), p.getGender().getLabel(), p.getBrand(), p.getMaterial(),
                 List.copyOf(p.getImages()),
-                p.getStore().getId(), p.getStore().getStoreName()
+                p.getStore().getId(), p.getStore().getStoreName(),
+                rating.average(), rating.count()
         );
     }
 
@@ -80,9 +91,10 @@ public record ProductDto(
     private static Integer discountPercent(Product p) {
         BigDecimal original = p.getOriginalPrice();
         if (original == null || original.compareTo(p.getPrice()) <= 0) return null;
-        return original.subtract(p.getPrice())
+        int percent = original.subtract(p.getPrice())
                 .multiply(BigDecimal.valueOf(100))
                 .divide(original, 0, RoundingMode.HALF_UP)
                 .intValue();
+        return percent > 0 ? percent : null; // a sub-1% markdown is not shown as "0% off"
     }
 }
